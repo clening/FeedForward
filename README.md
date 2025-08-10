@@ -14,8 +14,8 @@ This script is an intelligence gathering system that:
         --days_back / -d  ### How many days of historical data to process
 
 ## Examples        
--- python3 makeitmakesense.py -k keywords.txt -f Reader_Feeds.opml -d 3 
--- python3 makeitmakesense.py -k <your file> -f <yourfile>.opml -o /outputs -d 5
+        python3 makeitmakesense.py -k keywords.txt -f Reader_Feeds.opml -d 3 
+        python3 makeitmakesense.py -k <your file> -f <yourfile>.opml -o /outputs -d 5
 
  Nifty features: 
  - You can easily add RSS feeds and customize keywords by tweaking the keywords/OPML lists accordingly.

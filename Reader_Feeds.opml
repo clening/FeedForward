@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <opml version="1.0">
     <head>
-        <title>Privacy, Surveillance & AI Intelligence Feeds</title>
+        <title>Privacy, Surveillance, Adtech & AI Intelligence Feeds</title>
     </head>
     <body>
         <outline text="Privacy & Digital Rights Organizations" title="Privacy & Digital Rights Organizations">
@@ -12,13 +12,43 @@
             <outline type="rss" text="Future of Privacy Forum" title="Future of Privacy Forum" xmlUrl="https://fpf.org/feed/" />
         </outline>
         
-        <outline text="Legal & Regulatory News" title="Legal & Regulatory News">
+        <outline text="Adtech News, Company Blogs & Publications" title="Adtech News & Publications">
+            <outline type="rss" text="AdExchanger" title="AdExchanger" xmlUrl="https://adexchanger.com/feed/" />
+            <outline type="rss" text="AdTech Daily" title="AdTech Daily" xmlUrl="https://adtechdaily.com/feed/" />
+            <outline type="rss" text="Digiday" title="Digiday" xmlUrl="https://digiday.com/feed/" />
+            <outline type="rss" text="Marketing Dive" title="Marketing Dive" xmlUrl="https://marketingdive.com/feeds/news/" />
+            <outline type="rss" text="AdWeek" title="AdWeek" xmlUrl="https://www.adweek.com/feed/" />
+            <outline type="rss" text="MediaPost Online Media Daily" title="MediaPost Online Media Daily" xmlUrl="https://www.mediapost.com/publications/rss.cfm?N=omd" />
+            <outline type="rss" text="TechCrunch Advertising Tech" title="TechCrunch Advertising Tech" xmlUrl="https://techcrunch.com/tag/advertising-tech/feed/" />
+			<outline type="rss" text="Verve Group Blog" title="Verve Group Blog" xmlUrl="https://verve.com/feed/" />
+            <outline type="rss" text="Roq.ad Blog" title="Roq.ad Blog" xmlUrl="https://roq.ad/feed/" />
+            <outline type="rss" text="AdPushup Blog" title="AdPushup Blog" xmlUrl="https://adpushup.com/blog/feed/" />
+            <outline type="rss" text="OnAudience Blog" title="OnAudience Blog" xmlUrl="https://onaudience.com/blog/feed/" />
+            <outline type="rss" text="SmartyAds Blog" title="SmartyAds Blog" xmlUrl="https://smartyads.com/blog/feed/" />
+            <outline type="rss" text="PubMatic Blog" title="PubMatic Blog" xmlUrl="https://pubmatic.com/blog/feed/" />
+            <outline type="rss" text="Clearcode Blog" title="Clearcode Blog" xmlUrl="https://clearcode.cc/feed/" />
+			<outline type="rss" text="Video Marketing Blog (VDO.AI)" title="Video Marketing Blog (VDO.AI)" xmlUrl="https://vdo.ai/blog/feed/" />
+            <outline type="rss" text="Marketing Tech News" title="Marketing Tech News" xmlUrl="https://marketingtechnews.net/feed/" />
+            <outline type="rss" text="DMNews" title="DMNews" xmlUrl="https://dmnews.com/feed/" />
+        </outline>
+		
+		<outline text="Legal & Regulatory News & Publications" title="Legal & Regulatory News">
             <outline type="rss" text="Proskauer Privacy Law Blog" title="Proskauer Privacy Law Blog" xmlUrl="https://privacylaw.proskauer.com/feed/" />
             <outline type="rss" text="Sidley Austin - Data Matters" title="Sidley Austin - Data Matters" xmlUrl="https://datamatters.sidley.com/feed" />
             <outline type="rss" text="Covington - Inside Privacy" title="Covington - Inside Privacy" xmlUrl="https://insideprivacy.com/feed" />
             <outline type="rss" text="Husch Blackwell - ByteBack" title="Husch Blackwell - ByteBack" xmlUrl="https://bytebacklaw.com/feed" />
             <outline type="rss" text="Greenberg Traurig - Data Privacy Dish" title="Greenberg Traurig - Data Privacy Dish" xmlUrl="https://gtlaw-dataprivacydish.com/feed" />
             <outline type="rss" text="DLA Piper - Privacy Matters" title="DLA Piper - Privacy Matters" xmlUrl="https://privacymatters.dlapiper.com/feed" />
+			<outline type="rss" text="IAPP Privacy Tracker" title="IAPP Privacy Tracker" xmlUrl="https://iapp.org/rss/privacy-tracker/" />
+            <outline type="rss" text="Data Protection Report" title="Data Protection Report" xmlUrl="https://feeds.feedburner.com/DataProtectionReport" />
+            <outline type="rss" text="The Privacy Perspective" title="The Privacy Perspective" xmlUrl="https://theprivacyperspective.com/feed/" />
+            <outline type="rss" text="Global Privacy Watch" title="Global Privacy Watch" xmlUrl="https://globalprivacywatch.com/feed/" />
+            <outline type="rss" text="Practical Privacy (Wyrick Robbins)" title="Practical Privacy (Wyrick Robbins)" xmlUrl="https://practicalprivacy.wyrick.com/feed/" />
+			<outline type="rss" text="Advertising Law Blog (Olshan)" title="Advertising Law Blog (Olshan)" xmlUrl="https://www.advertisinglawblog.com/feed/" />
+            <outline type="rss" text="All About Advertising Law" title="All About Advertising Law" xmlUrl="https://allaboutadvertisinglaw.com/feed/" />
+            <outline type="rss" text="Proskauer False Advertising" title="Proskauer False Advertising" xmlUrl="https://proskaueronadvertising.com/feed/" />
+            <outline type="rss" text="DLA Piper Privacy Matters" title="DLA Piper Privacy Matters" xmlUrl="https://privacymatters.dlapiper.com/feed/" />
+            <outline type="rss" text="Brooks Pierce Digital Media" title="Brooks Pierce Digital Media" xmlUrl="https://brookspierce.com/digital-media-privacy-cybersecurity/feed/" />
         </outline>
         
         <outline text="Cybersecurity & Surveillance News" title="Cybersecurity & Surveillance News">
@@ -70,6 +100,9 @@
             <outline type="rss" text="Technology, Media & Telecoms (TMT)" title="Technology, Media & Telecoms (TMT)" xmlUrl="https://uk.practicallaw.thomsonreuters.com/LegalUpdates/Sector/w-014-7728/rss" />
             <outline type="rss" text="Privacy Issues News -- ScienceDaily" title="Privacy Issues News -- ScienceDaily" xmlUrl="https://www.sciencedaily.com/rss/science_society/privacy_issues.xml" />
             <outline type="rss" text="Tech Policy Press" title="Tech Policy Press" xmlUrl="https://www.techpolicy.press/rss/feed.xml" />
+			<outline type="rss" text="Guardian Advertising" title="Guardian Advertising" xmlUrl="https://theguardian.com/media/advertising/rss" />
+            <outline type="rss" text="Mashable Advertising" title="Mashable Advertising" xmlUrl="https://in.mashable.com/advertising.xml" />
+            <outline type="rss" text="Pogo Was Right (Privacy News)" title="Pogo Was Right (Privacy News)" xmlUrl="https://pogowasright.org/feed/" />
         </outline>
         
         <outline text="Existing Government News" title="Existing Government News">

@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
 Enhanced Data Protection Keyword Parser
-Monitors RSS feeds and government sources for datap protection related content
+Monitors RSS feeds and government sources for data protection related content
+
+OVERVIEW:
+This script is an intelligence gathering system that:
+1. Reads RSS feeds from an OPML file
+2. Searches government APIs (Federal Register, etc.)
+3. Filters content based on keywords from a provided text file
+4. Generates HTML reports of relevant findings
+
 """
 
 import argparse
@@ -10,57 +18,141 @@ import sys
 import re
 import json
 import xml.etree.ElementTree as ET
-import feedparser
+import feedparser  # Third-party library for parsing RSS feeds
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
-import pickle
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning  # HTML parsing
+import pickle  # For saving/loading processing history
 import warnings
-import dateutil.parser
+import dateutil.parser  # Better date parsing
 import requests
 import time
-import asyncio
-import aiohttp
+import asyncio  # For concurrent processing
+import aiohttp  # Async HTTP requests
 from typing import Dict, List, Optional
 
+# Suppress warnings from BeautifulSoup about HTML-like strings
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 class PalantirIntelligenceProcessor:
-    """Enhanced intelligence processor for Palantir monitoring."""
+    """
+    Main class that handles all intelligence gathering operations.
+    
+    PURPOSE: Centralize all the logic for monitoring multiple data sources,
+    filtering content, and generating reports.
+    
+    WHY CLASS-BASED: Keeps state (processed items, configuration) and 
+    provides clean separation of concerns.
+    """
     
     def __init__(self, opml_file=None, output_dir="output", keywords=None, days_back=7):
+        """
+        Initialize the intelligence processor with configuration.
+        
+        PARAMETERS:
+        - opml_file: File containing RSS feed URLs (OPML format)
+        - output_dir: Where to save reports and history
+        - keywords: List of terms to search for
+        - days_back: How many days of historical data to process
+        
+        WHY THESE PARAMETERS: Flexibility to change what we monitor,
+        where we save results, and how far back we look.
+        """
         self.opml_file = opml_file
         self.output_dir = output_dir
         self.keywords = keywords or []
         self.days_back = days_back
-        self.feeds = []
-        self.results = {}
+        
+        # Storage for feeds and results
+        self.feeds = []  # List of RSS feed URLs and metadata
+        self.results = {}  # Dictionary of processed intelligence items
+        
+        # History tracking to avoid reprocessing same items
         self.history_file = os.path.join(output_dir, "processed_intelligence.pkl")
-        self.processed_items = self.load_history()
+        self.processed_items = self.load_history()  # Load previously processed URLs
         
         # Government API endpoints (simplified for demo)
+        # WHY THESE: Government sources often have different APIs than RSS
         self.gov_sources = {
             'federal_register': 'https://www.federalregister.gov/api/v1/documents.json',
             'sam_gov': 'https://api.sam.gov/opportunities/v2/search'
         }
         
-        print(f"🎯 Palantir Intelligence Processor initialized")
+        # User feedback about initialization
+        print(f"🎯 Intelligence Processor initialized")
         print(f"📊 Monitoring {len(self.keywords)} keywords")
         print(f"📅 Looking back {self.days_back} days")
     
+    def is_recent(self, entry):
+        """
+        Check if RSS entry is within our time window.
+        
+        PURPOSE: Filter out old content - only process recent items.
+        
+        WHY NEEDED: RSS feeds often contain old items, and we only want
+        items from the last N days.
+        
+        COMPLEXITY: Different feeds use different date fields and formats.
+        """
+        try:
+            # Try different date fields (feeds vary in naming)
+            date_str = None
+            if hasattr(entry, 'published'):
+                date_str = entry.published
+            elif hasattr(entry, 'updated'):
+                date_str = entry.updated
+            
+            if date_str:
+                try:
+                    # Parse the date string
+                    entry_date = dateutil.parser.parse(date_str)
+                    
+                    # Ensure timezone awareness (assume UTC if none)
+                    if entry_date.tzinfo is None:
+                        entry_date = entry_date.replace(tzinfo=timezone.utc)
+                    
+                    # Check if within our time window
+                    cutoff = datetime.now(timezone.utc) - timedelta(days=self.days_back)
+                    return entry_date >= cutoff
+                except Exception:
+                    pass  # Date parsing failed
+            
+            # If we can't parse date, include it (better to include than miss)
+            return True
+            
+        except Exception:
+            return True  # Default to including the item
+    
     def load_history(self):
-        """Load processing history to avoid duplicates."""
+        """
+        Load previously processed items to avoid duplicates.
+        
+        PURPOSE: Performance optimization - don't reprocess items we've already seen.
+        
+        MECHANISM: Uses pickle to serialize/deserialize a dictionary of processed URLs.
+        
+        WHY PICKLE: Simple way to persist Python objects between runs.
+        Could use JSON, but pickle handles complex objects better.
+        """
         if os.path.exists(self.history_file):
             try:
                 with open(self.history_file, 'rb') as f:
                     return pickle.load(f)
             except Exception as e:
                 print(f"⚠️  Error loading history: {e}")
-                return {}
-        return {}
+                return {}  # Start fresh if history is corrupted
+        return {}  # No history file exists yet
     
     def save_history(self):
-        """Save processing history."""
+        """
+        Save processing history for next run.
+        
+        PURPOSE: Persist the URLs/IDs we've already processed so we don't 
+        reprocess them in future runs.
+        
+        WHY NEEDED: RSS feeds often contain the same items across multiple fetches.
+        Without this, we'd generate duplicate reports.
+        """
         try:
             os.makedirs(os.path.dirname(self.history_file), exist_ok=True)
             with open(self.history_file, 'wb') as f:
@@ -70,7 +162,15 @@ class PalantirIntelligenceProcessor:
             print(f"⚠️  Error saving history: {e}")
     
     def load_keywords(self, file_path):
-        """Load keywords from file."""
+        """
+        Load keywords from a text file (one keyword per line).
+        
+        PURPOSE: External keyword configuration - allows changing what we monitor
+        without modifying code.
+        
+        WHY FILE-BASED: Easier to maintain keyword lists, can be edited by 
+        non-programmers, version controlled separately.
+        """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 keywords = [line.strip() for line in f if line.strip()]
@@ -81,20 +181,34 @@ class PalantirIntelligenceProcessor:
             return []
     
     def parse_opml(self):
-        """Parse OPML file for RSS feeds."""
+        """
+        Parse OPML (Outline Processor Markup Language) file for RSS feed URLs.
+        
+        PURPOSE: OPML is a standard format for exporting RSS subscriptions from
+        feed readers. This lets users export their feeds and use them here.
+        
+        WHY OPML: Standard format, supported by most RSS readers (Feedly, etc.)
+        
+        WHAT IT DOES:
+        1. Reads XML file
+        2. Finds <outline> elements with xmlUrl attributes
+        3. Extracts feed titles and URLs
+        4. Stores in self.feeds list
+        """
         if not self.opml_file or not os.path.exists(self.opml_file):
-            print("📂 No OPML file provided, using default feeds")
-            self.add_default_feeds()
+            print("📂 No OPML file provided. Please add a file.")
             return
         
         try:
             with open(self.opml_file, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Fix XML issues
+            # Fix common XML issues (unescaped ampersands)
+            # WHY NEEDED: Many OPML exports have malformed XML
             fixed_content = re.sub(r'&(?!amp;|lt;|gt;|apos;|quot;)', '&amp;', content)
             root = ET.fromstring(fixed_content)
             
+            # Find all outline elements with RSS URLs
             for outline in root.findall(".//outline[@xmlUrl]"):
                 feed_title = outline.get("title", "Unnamed Feed")
                 feed_url = outline.get("xmlUrl")
@@ -103,38 +217,31 @@ class PalantirIntelligenceProcessor:
                     self.feeds.append({
                         "title": feed_title,
                         "url": feed_url,
-                        "type": "rss"
+                        "type": "rss"  # Tag for later processing
                     })
             
             print(f"📡 Loaded {len(self.feeds)} RSS feeds from OPML")
         except Exception as e:
             print(f"⚠️  Error parsing OPML: {e}")
-            self.add_default_feeds()
-    
-    def add_default_feeds(self):
-        """Add default RSS feeds focused on government and tech news."""
-        default_feeds = [
-            {"title": "TechCrunch", "url": "https://techcrunch.com/feed/", "type": "rss"},
-            {"title": "The Verge", "url": "https://www.theverge.com/rss/index.xml", "type": "rss"},
-            {"title": "Reuters Technology", "url": "https://feeds.reuters.com/reuters/technologyNews", "type": "rss"},
-            {"title": "Federal News Network", "url": "https://federalnewsnetwork.com/feed/", "type": "rss"},
-            {"title": "Defense News", "url": "https://www.defensenews.com/arc/outboundfeeds/rss/", "type": "rss"},
-            {"title": "Government Executive", "url": "https://www.govexec.com/rss/all/", "type": "rss"},
-            {"title": "Breaking Defense", "url": "https://breakingdefense.com/feed/", "type": "rss"},
-            {"title": "FCW", "url": "https://fcw.com/rss-feeds/all.aspx", "type": "rss"}
-        ]
-        
-        self.feeds.extend(default_feeds)
-        print(f"📡 Added {len(default_feeds)} default feeds")
-    
+            
     def contains_keywords(self, text):
-        """Check if text contains any of our keywords."""
+        """
+        Check if text contains any of our target keywords.
+        
+        PURPOSE: Core filtering logic - determines if content is relevant.
+        
+        RETURNS: (bool, list) - whether keywords found and which ones
+        
+        WHY CASE-INSENSITIVE: Keywords might appear in different cases
+        in source material.
+        """
         if not self.keywords:
-            return True  # If no keywords specified, include everything
+            return True, []  # If no keywords specified, include everything
         
         text_lower = text.lower()
         matched = []
         
+        # Check each keyword against the text
         for keyword in self.keywords:
             if keyword.lower() in text_lower:
                 matched.append(keyword)
@@ -142,83 +249,96 @@ class PalantirIntelligenceProcessor:
         return len(matched) > 0, matched
     
     def extract_content(self, entry):
-        """Extract clean content from RSS entry."""
+        """
+        Extract clean text content from RSS entry.
+        
+        PURPOSE: RSS entries can have content in different fields and formats.
+        This normalizes that into clean text.
+        
+        WHY MULTIPLE FIELDS: Different RSS feeds structure content differently:
+        - Some use 'content' field
+        - Some use 'summary' 
+        - Some use 'description'
+        
+        WHY HTML CLEANING: RSS content is often HTML, but we want plain text
+        for keyword matching and display.
+        """
         content = ""
         
-        # Try different content fields
+        # Try different content fields in order of preference
         if hasattr(entry, 'content') and entry.content:
-            content = entry.content[0].value
+            content = entry.content[0].value  # Content is usually a list
         elif hasattr(entry, 'summary'):
             content = entry.summary
         elif hasattr(entry, 'description'):
             content = entry.description
         
-        # Clean HTML
+        # Clean HTML tags and convert to plain text
         if content:
             try:
                 soup = BeautifulSoup(content, "html.parser")
                 content = soup.get_text(separator=' ', strip=True)
             except Exception:
-                pass
+                pass  # If parsing fails, use original content
         
         return content
-    
-    def is_recent(self, entry):
-        """Check if entry is recent enough."""
-        try:
-            # Try different date fields
-            date_str = None
-            if hasattr(entry, 'published'):
-                date_str = entry.published
-            elif hasattr(entry, 'updated'):
-                date_str = entry.updated
-            
-            if date_str:
-                try:
-                    entry_date = dateutil.parser.parse(date_str)
-                    if entry_date.tzinfo is None:
-                        entry_date = entry_date.replace(tzinfo=timezone.utc)
-                    
-                    cutoff = datetime.now(timezone.utc) - timedelta(days=self.days_back)
-                    return entry_date >= cutoff
-                except Exception:
-                    pass
-            
-            # If we can't parse date, include it
-            return True
-            
-        except Exception:
-            return True
-    
+        
     def generate_summary(self, content, title, keywords):
-        """Generate a summary focusing on Palantir relevance."""
-        # Find sentences containing keywords
+        """
+        Generate a focused summary highlighting keyword relevance.
+        
+        PURPOSE: Create concise summaries that show WHY an item was flagged.
+        
+        STRATEGY:
+        1. Find sentences containing keywords
+        2. Use those as the summary
+        3. Fall back to first sentences if needed
+        4. Add context about matched keywords
+        
+        WHY SENTENCE-BASED: More readable than word-based extraction.
+        """
+        # Split content into sentences
         sentences = re.split(r'[.!?]+', content)
         relevant_sentences = []
         
+        # Find sentences that contain our keywords
         for sentence in sentences:
             sentence = sentence.strip()
-            if len(sentence) > 30:
+            if len(sentence) > 30:  # Skip very short sentences
                 sentence_lower = sentence.lower()
                 if any(kw.lower() in sentence_lower for kw in keywords):
                     relevant_sentences.append(sentence)
-                    if len(relevant_sentences) >= 3:
+                    if len(relevant_sentences) >= 6:  # Limit summary length
                         break
         
         if relevant_sentences:
             summary = ". ".join(relevant_sentences) + "."
         else:
-            # Fallback to first few sentences
+            # Fallback: use first few sentences
             summary = ". ".join([s.strip() for s in sentences[:2] if s.strip()]) + "."
         
-        # Add context about what makes this relevant
+        # Add context about keyword matches
         if keywords:
             summary += f"\n\n🎯 Relevant keywords found: {', '.join(keywords)}"
         
         return summary
     
     def extract_entities(self, text):
-        """Extract key entities like companies, agencies, amounts."""
+        """
+        Extract key entities like companies, agencies, and dollar amounts.
+        
+        PURPOSE: Provide structured data about what's mentioned in content.
+        This helps with analysis and filtering.
+        
+        WHY REGEX: Simple pattern matching for common entity types.
+        Could use NLP libraries, but regex is faster and good enough for basic extraction.
+        
+        ENTITY TYPES:
+        - amounts: Dollar figures ($1M, $500K, etc.)
+        - agencies: Government departments and agencies
+        - companies: Organizations with common suffixes
+        - people: (skeleton implementation)
+        """
         entities = {
             'companies': [],
             'agencies': [],
@@ -226,24 +346,25 @@ class PalantirIntelligenceProcessor:
             'people': []
         }
         
-        # Extract monetary amounts
-        amount_pattern = r'\$[\d,]+(?:\.\d{2})?\s*(?:million|billion|thousand|M|B|K)?'
+        # Extract monetary amounts ($1M, $500,000, etc.)
+        amount_pattern = r'[\$€£¥][\d,]+(?:\.\d{2})?\s*(?:million|billion|thousand|M|B|K)?'
         amounts = re.findall(amount_pattern, text, re.IGNORECASE)
-        entities['amounts'] = amounts[:5]  # Limit results
+        entities['amounts'] = amounts[:5]  # Limit to avoid spam
         
         # Extract government agencies
         agency_patterns = [
-            r'Department of [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*',
-            r'DOD|Pentagon|CIA|FBI|NSA|DHS|ICE|CBP',
-            r'Office of [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*'
+            r'Department of [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*',  # Department of X
+            r'DOD|Pentagon|CIA|FBI|NSA|DHS|ICE|CBP',  # Common abbreviations
+            r'Office of [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*'  # Office of X
+            
         ]
         
         for pattern in agency_patterns:
             matches = re.findall(pattern, text)
             entities['agencies'].extend(matches)
         
-        # Extract companies
-        company_indicators = ['Inc', 'Corp', 'LLC', 'Ltd', 'Technologies', 'Systems']
+        # Extract companies (look for common corporate suffixes)
+        company_indicators = ['Inc', 'Corp', 'LLC', 'Ltd', 'Technologies', 'Systems', 'GmbH']
         words = text.split()
         
         for i, word in enumerate(words):
@@ -251,100 +372,58 @@ class PalantirIntelligenceProcessor:
                 # Get company name (assume it's the previous 1-2 words + this word)
                 start = max(0, i-2)
                 company = ' '.join(words[start:i+1])
-                if len(company) > 5:  # Avoid short matches
+                if len(company) > 5:  # Avoid very short matches
                     entities['companies'].append(company)
         
-        # Remove duplicates and limit
+        # Remove duplicates and limit results
         for key in entities:
             entities[key] = list(set(entities[key]))[:5]
         
         return entities
     
-    async def fetch_government_sources(self, session):
-        """Fetch from all government sources."""
-        gov_items = []
-        
-        # Federal Register
-        fed_items = await self.fetch_federal_register_data(session)
-        gov_items.extend(fed_items)
-        
-        # USASpending.gov
-        usa_items = await self.fetch_usaspending_awards(session)
-        gov_items.extend(usa_items)
-        
-        # Defense.gov RSS
-        def_items = await self.fetch_defense_contracts(session)
-        gov_items.extend(def_items)
-        
-        return gov_items
-    
-    async def fetch_federal_register(self, session):
-        """Fetch Federal Register documents (simplified)."""
-        items = []
-        
-        try:
-            # Build search query
-            keywords_query = ' OR '.join([f'"{kw}"' for kw in self.keywords[:3]])  # Limit to avoid long URLs
-            
-            params = {
-                'conditions[term]': keywords_query,
-                'conditions[publication_date][gte]': (datetime.now() - timedelta(days=self.days_back)).strftime('%Y-%m-%d'),
-                'per_page': 20,
-                'fields[]': ['title', 'abstract', 'html_url', 'publication_date', 'agencies']
-            }
-            
-            print(f"🏛️  Searching Federal Register for: {keywords_query}")
-            
-            async with session.get(self.gov_sources['federal_register'], params=params, timeout=30) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    
-                    for doc in data.get('results', []):
-                        item_id = doc.get('html_url', '')
-                        if item_id and item_id not in self.processed_items:
-                            items.append({
-                                'id': item_id,
-                                'title': doc.get('title', ''),
-                                'content': doc.get('abstract', ''),
-                                'url': item_id,
-                                'date': doc.get('publication_date', ''),
-                                'source': 'Federal Register',
-                                'source_type': 'government',
-                                'agencies': doc.get('agencies', [])
-                            })
-                            
-                            self.processed_items[item_id] = datetime.now().isoformat()
-                
-                print(f"📄 Found {len(items)} Federal Register documents")
-        
-        except Exception as e:
-            print(f"⚠️  Error fetching Federal Register: {e}")
-        
-        return items
-    
     async def process_rss_feeds(self, session):
-        """Process RSS feeds asynchronously."""
+        """
+        Process all RSS feeds asynchronously.
+        
+        PURPOSE: Main RSS processing logic - fetches feeds, extracts content,
+        filters by keywords, and structures results.
+        
+        WHY ASYNC: RSS feeds can be slow to fetch, so process multiple
+        feeds concurrently for better performance.
+        
+        WORKFLOW:
+        1. Iterate through each RSS feed
+        2. Parse RSS XML
+        3. Check each entry for keywords and recency
+        4. Extract and clean content
+        5. Generate summaries and extract entities
+        6. Store results and mark as processed
+        """
         items = []
         
         for feed in self.feeds:
             if feed.get('type') != 'rss':
-                continue
+                continue  # Skip non-RSS feeds
                 
             print(f"📡 Processing: {feed['title']}")
             
             try:
-                # Use feedparser for RSS (it handles the complexity)
+                # Use feedparser library to handle RSS complexity
                 parsed_feed = feedparser.parse(feed['url'])
                 
-                for entry in parsed_feed.entries[:30]:  # Limit per feed
+                # Process each entry in the feed
+                for entry in parsed_feed.entries[:50]:  # Limit entries per feed
                     entry_url = entry.get('link', '')
                     
+                    # Skip if already processed or no URL
                     if not entry_url or entry_url in self.processed_items:
                         continue
                     
+                    # Skip if too old
                     if not self.is_recent(entry):
                         continue
                     
+                    # Extract basic info
                     title = entry.get('title', '')
                     content = self.extract_content(entry)
                     
@@ -352,12 +431,13 @@ class PalantirIntelligenceProcessor:
                     has_keywords, matched_keywords = self.contains_keywords(f"{title} {content}")
                     
                     if has_keywords:
-                        # Generate summary
+                        # Generate summary focusing on keywords
                         summary = self.generate_summary(content, title, matched_keywords)
                         
-                        # Extract entities
+                        # Extract structured entities
                         entities = self.extract_entities(f"{title} {content}")
                         
+                        # Store the processed item
                         items.append({
                             'id': entry_url,
                             'title': title,
@@ -371,9 +451,10 @@ class PalantirIntelligenceProcessor:
                             'entities': entities
                         })
                         
+                        # Mark as processed to avoid duplicates
                         self.processed_items[entry_url] = datetime.now().isoformat()
                 
-                # Rate limiting
+                # Rate limiting to be nice to RSS servers
                 await asyncio.sleep(1)
                 
             except Exception as e:
@@ -382,12 +463,25 @@ class PalantirIntelligenceProcessor:
         return items
     
     async def process_all_sources(self):
-        """Process all intelligence sources."""
+        """
+        Main orchestrator - processes all intelligence sources.
+        
+        PURPOSE: Coordinate the processing of RSS feeds and other sources.
+        
+        WHY ASYNC: Some sources are slow, so process them concurrently.
+        
+        WORKFLOW:
+        1. Create HTTP session for efficient connection reuse
+        2. Process RSS feeds
+        3. Process other sources 
+        4. Combine all results
+        5. Save processing history
+        """
         print(f"🚀 Starting intelligence collection...")
         
         all_items = []
         
-        # Create HTTP session
+        # Create HTTP session with timeout
         timeout = aiohttp.ClientTimeout(total=60)
         async with aiohttp.ClientSession(timeout=timeout) as session:
             # Process RSS feeds
@@ -395,28 +489,41 @@ class PalantirIntelligenceProcessor:
             all_items.extend(rss_items)
             
             # Process Federal Register (if keywords specified)
-            if self.keywords:
-                fed_items = await self.fetch_federal_register(session)
-                all_items.extend(fed_items)
+            #if self.keywords:
+            #    fed_items = await self.fetch_federal_register(session)
+            #    all_items.extend(fed_items)
         
-        # Store results
+        # Store results in instance variable
         for item in all_items:
             self.results[item['id']] = item
         
-        # Save history
+        # Save processing history for next run
         self.save_history()
         
         print(f"✅ Collected {len(all_items)} intelligence items")
         return len(all_items)
     
     def generate_intelligence_report(self):
-        """Generate comprehensive HTML intelligence report."""
+        """
+        Generate comprehensive HTML intelligence report.
+        
+        PURPOSE: Create a readable, formatted report of all findings.
+        
+        WHY HTML: Rich formatting, can include links, easy to view and share.
+        
+        WORKFLOW:
+        1. Sort results by date
+        2. Generate statistics
+        3. Create HTML content
+        4. Save to file
+        """
         if not self.results:
             print("📭 No intelligence items found")
             return None
         
+        # Create timestamped filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-        report_path = os.path.join(self.output_dir, f"palantir_intelligence_{timestamp}.html")
+        report_path = os.path.join(self.output_dir, f"intelligence_{timestamp}.html")
         
         os.makedirs(self.output_dir, exist_ok=True)
         
@@ -427,11 +534,13 @@ class PalantirIntelligenceProcessor:
             reverse=True
         )
         
-        # Generate statistics
+        # Generate summary statistics
         stats = self.generate_stats(sorted_items)
         
+        # Create HTML content
         html = self.generate_html_content(sorted_items, stats, timestamp)
         
+        # Write to file
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write(html)
         
@@ -439,44 +548,72 @@ class PalantirIntelligenceProcessor:
         return report_path
     
     def generate_stats(self, items):
-        """Generate statistics for the report."""
+        """
+        Generate summary statistics for the report.
+        
+        PURPOSE: Provide overview metrics to help users understand
+        the scope and nature of findings.
+        
+        METRICS:
+        - Total items found
+        - Breakdown by source type
+        - Keyword frequency
+        - Companies & agencies mentioned
+        - Dollar amounts found
+        """
         stats = {
             'total_items': len(items),
             'source_breakdown': {},
             'keyword_frequency': {},
             'agencies_mentioned': set(),
+            'companies_mentioned': set(),
             'total_amounts': []
         }
         
-        # Source breakdown
+        # Count items by source type
         for item in items:
             source_type = item.get('source_type', 'unknown')
             stats['source_breakdown'][source_type] = stats['source_breakdown'].get(source_type, 0) + 1
         
-        # Keyword frequency
+        # Count keyword frequency
         for item in items:
             for keyword in item.get('keywords', []):
                 stats['keyword_frequency'][keyword] = stats['keyword_frequency'].get(keyword, 0) + 1
         
-        # Agencies and amounts
+        # Collect agencies and amounts mentioned
         for item in items:
             entities = item.get('entities', {})
             if entities.get('agencies'):
                 stats['agencies_mentioned'].update(entities['agencies'])
+            if entities.get('companies'):
+                stats['agencies_mentioned'].update(entities['companies'])    
             if entities.get('amounts'):
                 stats['total_amounts'].extend(entities['amounts'])
         
         return stats
     
     def generate_html_content(self, items, stats, timestamp):
-        """Generate the HTML content for the report."""
+        """
+        Generate the complete HTML content for the report.
+        
+        PURPOSE: Create formatted, styled HTML report with all findings.
+        
+        STRUCTURE:
+        1. Header with metadata
+        2. Statistics dashboard
+        3. Individual item details
+        
+        WHY INLINE CSS: Self-contained file, easier to share.
+        """
+        # HTML header with embedded CSS
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Palantir Intelligence Report - {timestamp}</title>
+    <title>Daily Intelligence Report - {timestamp}</title>
     <style>
+        /* Modern, clean styling for the intelligence report */
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -492,6 +629,7 @@ class PalantirIntelligenceProcessor:
             margin-bottom: 30px;
             text-align: center;
         }}
+        /* Grid layout for statistics cards */
         .stats {{
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -510,6 +648,7 @@ class PalantirIntelligenceProcessor:
             font-weight: bold;
             color: #3498db;
         }}
+        /* Individual intelligence item styling */
         .intelligence-item {{
             background: white;
             margin: 20px 0;
@@ -518,6 +657,7 @@ class PalantirIntelligenceProcessor:
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             border-left: 5px solid #3498db;
         }}
+        /* Source type badges */
         .source-badge {{
             display: inline-block;
             padding: 5px 12px;
@@ -529,6 +669,7 @@ class PalantirIntelligenceProcessor:
         }}
         .source-rss {{ background-color: #e74c3c; }}
         .source-government {{ background-color: #27ae60; }}
+        /* Content sections */
         .summary {{
             background-color: #ecf0f1;
             padding: 15px;
@@ -570,7 +711,7 @@ class PalantirIntelligenceProcessor:
 </head>
 <body>
     <div class="header">
-        <h1>🎯 Palantir Intelligence Report</h1>
+        <h1>🎯 Daily Intelligence Report</h1>
         <p>Generated: {datetime.now().strftime('%B %d, %Y at %H:%M UTC')}</p>
         <p>Monitoring Period: Last {self.days_back} day(s)</p>
     </div>
@@ -582,7 +723,7 @@ class PalantirIntelligenceProcessor:
         </div>
 """
         
-        # Add source breakdown stats
+        # Add source breakdown statistics
         for source_type, count in stats['source_breakdown'].items():
             html += f"""
         <div class="stat-card">
@@ -591,7 +732,7 @@ class PalantirIntelligenceProcessor:
         </div>
 """
         
-        # Add keyword stats
+        # Add top keyword statistic
         if stats['keyword_frequency']:
             top_keyword = max(stats['keyword_frequency'].items(), key=lambda x: x[1])
             html += f"""
@@ -601,6 +742,7 @@ class PalantirIntelligenceProcessor:
         </div>
 """
         
+        # Main content section
         html += """
     </div>
     
@@ -608,6 +750,7 @@ class PalantirIntelligenceProcessor:
         <h2>📋 Intelligence Items</h2>
 """
         
+        # Add items or no-results message
         if not items:
             html += """
         <div class="no-results">
@@ -619,6 +762,7 @@ class PalantirIntelligenceProcessor:
             for i, item in enumerate(items, 1):
                 html += self.generate_item_html(item, i)
         
+        # Close HTML
         html += """
     </div>
 </body>
@@ -627,7 +771,19 @@ class PalantirIntelligenceProcessor:
         return html
     
     def generate_item_html(self, item, index):
-        """Generate HTML for individual intelligence item."""
+        """
+        Generate HTML for a single intelligence item.
+        
+        PURPOSE: Format individual findings with all relevant information.
+        
+        INCLUDES:
+        - Title and link
+        - Source badge
+        - Summary
+        - Keywords found
+        - Entities extracted
+        - Metadata
+        """
         source_type = item.get('source_type', 'unknown')
         
         html = f"""
@@ -637,7 +793,7 @@ class PalantirIntelligenceProcessor:
             <span class="source-badge source-{source_type}">{source_type.replace('_', ' ').title()}</span>
 """
         
-        # Add summary if available
+        # Add summary section
         if item.get('summary'):
             html += f"""
             <div class="summary">
@@ -646,7 +802,7 @@ class PalantirIntelligenceProcessor:
             </div>
 """
         
-        # Add keywords
+        # Add keywords section
         if item.get('keywords'):
             html += f"""
             <div class="keywords">
@@ -655,7 +811,7 @@ class PalantirIntelligenceProcessor:
             </div>
 """
         
-        # Add entities
+        # Add entities section
         entities = item.get('entities', {})
         if any(entities.values()):
             html += '<div class="entities"><strong>🏢 Entities:</strong><br>'
@@ -668,6 +824,9 @@ class PalantirIntelligenceProcessor:
             
             if entities.get('companies'):
                 html += f"<strong>Companies:</strong> {', '.join(entities['companies'][:3])}<br>"
+                
+            if entities.get('people'):
+                html += f"<strong>People:</strong> {', '.join(entities['people'][:3])}<br>"
             
             html += '</div>'
         
@@ -683,52 +842,56 @@ class PalantirIntelligenceProcessor:
         return html
 
 def main():
-    """Main function."""
+    """
+    Main function - entry point for the application.
+    
+    PURPOSE: Handle command-line arguments and orchestrate the entire process.
+    
+    WORKFLOW:
+    1. Parse command-line arguments
+    2. Load keywords from file
+    3. Initialize processor
+    4. Parse RSS feeds
+    5. Process all sources
+    6. Generate report
+    
+    WHY MAIN FUNCTION: Clean separation between CLI handling and core logic.
+    """
+    # Set up command-line argument parsing
     parser = argparse.ArgumentParser(
-        description="Enhanced Palantir Intelligence Processor",
+        description="Enhanced Intelligence Processor",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python palantir_intelligence.py -k keywords.txt -f feeds.opml -d 7
-  python palantir_intelligence.py -k keywords.txt --gov -d 3
+  python3 palantir_intelligence.py -k keywords.txt -f Reader_Feeds.opml -d 3
+  python3 palantir_intelligence.py -k keywords.txt --gov -f Reader_Feeds.opml -d 3
         """
     )
     
-    parser.add_argument("--keywords", "-k", help="Path to keywords file")
-    parser.add_argument("--opml-file", "-f", help="Path to OPML file with RSS feeds")
+    # Define command-line arguments
+    parser.add_argument("--keywords", "-k", default="keywords.txt", help="Default keywords file")
+    parser.add_argument("--feeds", "-f", default="Reader_Feeds.opml", help="Default OPML file")
     parser.add_argument("--output-dir", "-o", default="output", help="Output directory")
-    parser.add_argument("--days-back", "-d", type=int, default=7, help="Days back to search")
+    parser.add_argument("--days-back", "-d", type=int, default=3, help="Days back to search")
     parser.add_argument("--gov", action="store_true", help="Include government sources")
     parser.add_argument("--reset", action="store_true", help="Reset processing history")
     
     args = parser.parse_args()
     
-    # Load keywords
+    # Load keywords from file
     keywords = []
-    if args.keywords and os.path.exists(args.keywords):
-        try:
-            with open(args.keywords, 'r', encoding='utf-8') as f:
-                keywords = [line.strip() for line in f if line.strip()]
-        except Exception as e:
-            print(f"⚠️  Error loading keywords: {e}")
+    with open('keywords.txt', 'r', encoding='utf-8') as f:
+        keywords = [line.strip() for line in f if line.strip()]
     
-    if not keywords:
-        # Default Palantir keywords
-        keywords = [
-            "Palantir", "PLTR", "Alex Karp", "Gotham", "Foundry", "AIP",
-            "government contract", "data analytics", "Peter Thiel"
-        ]
-        print("📋 Using default Palantir keywords")
-    
-    # Initialize processor
+    # Initialize the intelligence processor
     processor = PalantirIntelligenceProcessor(
-        opml_file=args.opml_file,
+        opml_file='Reader_Feeds.opml',
         output_dir=args.output_dir,
         keywords=keywords,
         days_back=args.days_back
     )
     
-    # Reset history if requested
+    # Reset processing history if requested
     if args.reset and os.path.exists(processor.history_file):
         try:
             os.remove(processor.history_file)
@@ -736,16 +899,19 @@ Examples:
         except Exception as e:
             print(f"⚠️  Error resetting history: {e}")
     
-    # Parse feeds
+    # Parse RSS feeds from OPML
     processor.parse_opml()
     
-    # Run processing
+    # Run the main processing
     try:
+        # Create and run async event loop
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
+        # Process all sources
         items_found = loop.run_until_complete(processor.process_all_sources())
         
+        # Generate report if items were found
         if items_found > 0:
             processor.generate_intelligence_report()
             print("✅ Intelligence collection complete!")
@@ -758,5 +924,6 @@ Examples:
     finally:
         loop.close()
 
+# Entry point - only run if script is executed directly
 if __name__ == "__main__":
     main()

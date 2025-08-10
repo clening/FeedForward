@@ -13,5 +13,5 @@ __pycache__/
 
 # Ignore older stuff & outputs
 /older
-/outputs
+/output
 

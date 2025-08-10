@@ -1,15 +1,7 @@
-# Ignore Google Drive authentication files
-gdrive_config.json
-gdrive_credentials.json
-client_secrets.json
-
 # Ignore Python virtual environment
 venv/
 env/
 .env/
-
-# Ignore generated content
-feed_content/
 
 # Ignore Python cache files
 __pycache__/
@@ -18,14 +10,8 @@ __pycache__/
 
 # Ignore log files
 *.log
-claude_mcp_client.py
-older/palantir_intelligence.py
-older/rss_feed_processor.py
-output/intelligence_20250810_1415.html
-output/palantir_intelligence_20250808_1436.html
-output/palantir_intelligence_20250808_1505.html
-output/processed_intelligence.pkl
-palantir_intelligence.py
-palantir_mcp_server.py
-requirements.txt
-rss_feed_processor.py
+
+# Ignore older stuff & outputs
+/older
+/outputs
+

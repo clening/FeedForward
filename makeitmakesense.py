@@ -82,6 +82,8 @@ class PalantirIntelligenceProcessor:
         print(f"🎯 Intelligence Processor initialized")
         print(f"📊 Monitoring {len(self.keywords)} keywords")
         print(f"📅 Looking back {self.days_back} days")
+        if self.opml_file:
+            print(f"📂 Using OPML file: {self.opml_file}")
     
     def is_recent(self, entry):
         """
@@ -195,8 +197,12 @@ class PalantirIntelligenceProcessor:
         3. Extracts feed titles and URLs
         4. Stores in self.feeds list
         """
-        if not self.opml_file or not os.path.exists(self.opml_file):
-            print("📂 No OPML file provided. Please add a file.")
+        if not self.opml_file:
+            print("📂 No OPML file specified. Use -f to specify an OPML file.")
+            return
+            
+        if not os.path.exists(self.opml_file):
+            print(f"⚠️  OPML file not found: {self.opml_file}")
             return
         
         try:
@@ -518,7 +524,7 @@ class PalantirIntelligenceProcessor:
         4. Save to file
         """
         if not self.results:
-            print("📭 No intelligence items found")
+            print("🔭 No intelligence items found")
             return None
         
         # Create timestamped filename
@@ -545,6 +551,7 @@ class PalantirIntelligenceProcessor:
             f.write(html)
         
         print(f"📊 Intelligence report generated: {report_path}")
+       
         return report_path
     
     def generate_stats(self, items):
@@ -797,7 +804,7 @@ class PalantirIntelligenceProcessor:
         if item.get('summary'):
             html += f"""
             <div class="summary">
-                <strong>📝 Summary:</strong><br>
+                <strong>🔍 Summary:</strong><br>
                 {item['summary'].replace('\\n', '<br>')}
             </div>
 """
@@ -841,6 +848,10 @@ class PalantirIntelligenceProcessor:
 """
         return html
 
+def emailit(f):    
+    os.system(f'(echo "Subject: Daily Intel Report"; echo "Content-Type: text/html"; echo; cat {f}) | ssmtp dbenbennbrave@gmail.com')
+
+    
 def main():
     """
     Main function - entry point for the application.
@@ -863,16 +874,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 palantir_intelligence.py -k keywords.txt -f Reader_Feeds.opml -d 3
-  python3 palantir_intelligence.py -k keywords.txt --gov -f Reader_Feeds.opml -d 3
+  python3 makeitmakesense.py -k keywords.txt -f Reader_Feeds.opml -d 3
+  python3 makeitmakesense.py -k keywords.txt -f Emerging_Tech_Feeds.opml -d 3
+  python3 makeitmakesense.py -k keywords.txt --gov -f Reader_Feeds.opml -d 3
         """
     )
     
     # Define command-line arguments
-    parser.add_argument("--keywords", "-k", default="keywords.txt", help="Default keywords file")
-    parser.add_argument("--feeds", "-f", default="Reader_Feeds.opml", help="Default OPML file")
-    parser.add_argument("--output-dir", "-o", default="output", help="Output directory")
-    parser.add_argument("--days-back", "-d", type=int, default=3, help="Days back to search")
+    parser.add_argument("--keywords", "-k", default="keywords.txt", help="Keywords file (default: keywords.txt)")
+    parser.add_argument("--feeds", "-f", default="Reader_Feeds.opml", help="OPML file containing RSS feeds (default: Reader_Feeds.opml)")
+    parser.add_argument("--output-dir", "-o", default="output", help="Output directory (default: output)")
+    parser.add_argument("--days-back", "-d", type=int, default=3, help="Days back to search (default: 3)")
     parser.add_argument("--gov", action="store_true", help="Include government sources")
     parser.add_argument("--reset", action="store_true", help="Reset processing history")
     
@@ -880,12 +892,21 @@ Examples:
     
     # Load keywords from file
     keywords = []
-    with open('keywords.txt', 'r', encoding='utf-8') as f:
-        keywords = [line.strip() for line in f if line.strip()]
+    if os.path.exists(args.keywords):
+        try:
+            with open(args.keywords, 'r', encoding='utf-8') as f:
+                keywords = [line.strip() for line in f if line.strip()]
+            print(f"📋 Loaded {len(keywords)} keywords from {args.keywords}")
+        except Exception as e:
+            print(f"⚠️  Error loading keywords from {args.keywords}: {e}")
+            return
+    else:
+        print(f"⚠️  Keywords file not found: {args.keywords}")
+        return
     
-    # Initialize the intelligence processor
+    # Initialize the intelligence processor with the specified OPML file
     processor = PalantirIntelligenceProcessor(
-        opml_file='Reader_Feeds.opml',
+        opml_file=args.feeds,  # ← THIS IS THE KEY FIX - use args.feeds instead of empty string
         output_dir=args.output_dir,
         keywords=keywords,
         days_back=args.days_back
@@ -895,12 +916,16 @@ Examples:
     if args.reset and os.path.exists(processor.history_file):
         try:
             os.remove(processor.history_file)
-            print("🔄 Processing history reset")
+            print("🗑️ Processing history reset")
         except Exception as e:
             print(f"⚠️  Error resetting history: {e}")
     
     # Parse RSS feeds from OPML
     processor.parse_opml()
+    
+    if not processor.feeds:
+        print("⚠️  No feeds loaded. Check your OPML file.")
+        return
     
     # Run the main processing
     try:
@@ -913,13 +938,14 @@ Examples:
         
         # Generate report if items were found
         if items_found > 0:
-            processor.generate_intelligence_report()
+            report = processor.generate_intelligence_report()
+            emailit(report)
             print("✅ Intelligence collection complete!")
         else:
-            print("📭 No new intelligence items found")
+            print("🔭 No new intelligence items found")
             
     except Exception as e:
-        print(f"❌ Error during processing: {e}")
+        print(f"⚠️ Error during processing: {e}")
         sys.exit(1)
     finally:
         loop.close()

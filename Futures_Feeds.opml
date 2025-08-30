@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.0">
+    <head>
+        <title>Emerging Technology & Futures Intelligence Feeds</title>
+    </head>
+    <body>
+        
+        <outline text="Brain-Computer Interfaces & Neural Technologies" title="Brain-Computer Interfaces & Neural Technologies">
+            <outline type="rss" text="Nature Neuroscience" title="Nature Neuroscience" xmlUrl="https://www.nature.com/neuro/web-feeds" />
+            <outline type="rss" text="Frontiers in Neuroscience - Neuroprosthetics" title="Frontiers in Neuroscience - Neuroprosthetics" xmlUrl="https://www.frontiersin.org/journals/neuroscience/sections/neuroprosthetics/rss" />
+            <outline type="rss" text="IEEE Spectrum Biomedical" title="IEEE Spectrum Biomedical" xmlUrl="https://spectrum.ieee.org/feeds/topic/biomedical/" />
+            <outline type="rss" text="MIT News - Brain and Cognitive Sciences" title="MIT News - Brain and Cognitive Sciences" xmlUrl="https://news.mit.edu/rss/topic/brain-and-cognitive-sciences" />
+            <outline type="rss" text="Stanford Wu Tsai Neurosciences Institute" title="Stanford Wu Tsai Neurosciences Institute" xmlUrl="https://neuroscience.stanford.edu/news/rss.xml" />
+            <outline type="rss" text="BrainGate Consortium" title="BrainGate Consortium" xmlUrl="https://www.braingate.org/feed/" />
+            <outline type="rss" text="Journal of Neural Engineering" title="Journal of Neural Engineering" xmlUrl="https://iopscience.iop.org/journal/1741-2552/rss" />
+        </outline>
+        
+        <outline text="AGI Research & Development" title="AGI Research & Development">
+            <outline type="rss" text="OpenAI Blog" title="OpenAI Blog" xmlUrl="https://openai.com/blog/rss.xml" />
+            <outline type="rss" text="DeepMind Blog" title="DeepMind Blog" xmlUrl="https://deepmind.google/discover/blog/rss.xml" />
+            <outline type="rss" text="Anthropic News" title="Anthropic News" xmlUrl="https://www.anthropic.com/news/rss" />
+            <outline type="rss" text="Stanford HAI News" title="Stanford HAI News" xmlUrl="https://hai.stanford.edu/news/feed/" />
+            <outline type="rss" text="Berkeley AI Research (BAIR)" title="Berkeley AI Research (BAIR)" xmlUrl="https://bair.berkeley.edu/blog/feed.xml" />
+            <outline type="rss" text="MIT CSAIL" title="MIT CSAIL" xmlUrl="https://news.mit.edu/rss/topic/computer-science-and-artificial-intelligence-laboratory-csail" />
+            <outline type="rss" text="Cambridge Leverhulme CFI" title="Cambridge Leverhulme CFI" xmlUrl="https://www.lcfi.ac.uk/feed/" />
+            <outline type="rss" text="Future of Humanity Institute" title="Future of Humanity Institute" xmlUrl="https://www.fhi.ox.ac.uk/feed/" />
+            <outline type="rss" text="Machine Intelligence Research Institute" title="Machine Intelligence Research Institute" xmlUrl="https://intelligence.org/feed/" />
+            <outline type="rss" text="Center for AI Safety" title="Center for AI Safety" xmlUrl="https://safe.ai/feed/" />
+        </outline>
+        
+        <outline text="Quantum Computing & Information" title="Quantum Computing & Information">
+            <outline type="rss" text="arXiv Quantum Physics" title="arXiv Quantum Physics" xmlUrl="http://export.arxiv.org/rss/quant-ph" />
+            <outline type="rss" text="IBM Quantum Network" title="IBM Quantum Network" xmlUrl="https://research.ibm.com/blog/rss/quantum" />
+            <outline type="rss" text="Nature Quantum Information" title="Nature Quantum Information" xmlUrl="https://www.nature.com/articles/s41534.rss" />
+            <outline type="rss" text="QuEra Computing Blog" title="QuEra Computing Blog" xmlUrl="https://quera.com/blog/feed/" />
+            <outline type="rss" text="Quantum Frontiers (Caltech)" title="Quantum Frontiers (Caltech)" xmlUrl="https://quantumfrontiers.com/feed/" />
+            <outline type="rss" text="IonQ News" title="IonQ News" xmlUrl="https://ionq.com/news/rss" />
+            <outline type="rss" text="Rigetti Computing" title="Rigetti Computing" xmlUrl="https://www.rigetti.com/feed" />
+        </outline>
+        
+        <outline text="Synthetic Biology & Bioengineering" title="Synthetic Biology & Bioengineering">
+            <outline type="rss" text="Nature Synthetic Biology" title="Nature Synthetic Biology" xmlUrl="https://www.nature.com/subjects/synthetic-biology.rss" />
+            <outline type="rss" text="MIT Synthetic Biology Center" title="MIT Synthetic Biology Center" xmlUrl="https://news.mit.edu/rss/topic/synthetic-biology" />
+            <outline type="rss" text="Synthetic Biology Engineering Research Center" title="Synthetic Biology Engineering Research Center" xmlUrl="https://www.synberc.org/feed" />
+            <outline type="rss" text="iGEM Foundation" title="iGEM Foundation" xmlUrl="https://igem.org/feed/" />
+            <outline type="rss" text="Ginkgo Bioworks" title="Ginkgo Bioworks" xmlUrl="https://www.ginkgobioworks.com/feed/" />
+        </outline>
+        
+        <outline text="Advanced Materials & Nanotechnology" title="Advanced Materials & Nanotechnology">
+            <outline type="rss" text="Nature Materials" title="Nature Materials" xmlUrl="https://www.nature.com/nmat/web-feeds" />
+            <outline type="rss" text="Nature Nanotechnology" title="Nature Nanotechnology" xmlUrl="https://www.nature.com/nnano/web-feeds" />
+            <outline type="rss" text="Nanotechnology Now" title="Nanotechnology Now" xmlUrl="https://www.nanotech-now.com/rss/current.xml" />
+            <outline type="rss" text="Foresight Institute" title="Foresight Institute" xmlUrl="https://foresightinstitute.substack.com/feed" />
+            <outline type="rss" text="Center for Nanotechnology" title="Center for Nanotechnology" xmlUrl="https://nano.gov/rss" />
+            <outline type="rss" text="Advanced Science" title="Advanced Science" xmlUrl="https://onlinelibrary.wiley.com/feed/21983844/most-recent" />
+        </outline>
+        
+        <outline text="Space Technology & Advanced Propulsion" title="Space Technology & Advanced Propulsion">
+            <outline type="rss" text="Centauri Dreams" title="Centauri Dreams" xmlUrl="https://centauri-dreams.org/feed/" />
+            <outline type="rss" text="NASA Technology" title="NASA Technology" xmlUrl="https://technology.nasa.gov/feed" />
+            <outline type="rss" text="ESA Advanced Concepts" title="ESA Advanced Concepts" xmlUrl="https://www.esa.int/rss/Advanced_Concepts.xml" />
+            <outline type="rss" text="SpaceX Updates" title="SpaceX Updates" xmlUrl="https://spacex.com/news.xml" />
+            <outline type="rss" text="Breakthrough Starshot" title="Breakthrough Starshot" xmlUrl="https://breakthroughinitiatives.org/feed/starshot" />
+            <outline type="rss" text="The Planetary Society" title="The Planetary Society" xmlUrl="https://www.planetary.org/rss/articles.xml" />
+        </outline>
+        
+        <outline text="Mainstream Science & Technology" title="Mainstream Science & Technology">
+            <outline type="rss" text="MIT Technology Review" title="MIT Technology Review" xmlUrl="https://www.technologyreview.com/feed/" />
+            <outline type="rss" text="Scientific American" title="Scientific American" xmlUrl="http://rss.sciam.com/basic-science" />
+            <outline type="rss" text="New Scientist Technology" title="New Scientist Technology" xmlUrl="https://www.newscientist.com/subject/technology/feed/" />
+            <outline type="rss" text="Nature News" title="Nature News" xmlUrl="https://www.nature.com/nature.rss" />
+            <outline type="rss" text="Science Magazine" title="Science Magazine" xmlUrl="https://www.science.org/rss/current.xml" />
+            <outline type="rss" text="IEEE Spectrum" title="IEEE Spectrum" xmlUrl="https://spectrum.ieee.org/feeds/feed.xml" />
+            <outline type="rss" text="Wired" title="Wired" xmlUrl="https://www.wired.com/feed/rss" />
+            <outline type="rss" text="Ars Technica" title="Ars Technica" xmlUrl="https://feeds.arstechnica.com/arstechnica/index" />
+        </outline>
+        
+        <outline text="Futurism & Speculative Technology" title="Futurism & Speculative Technology">
+            <outline type="rss" text="Singularity Hub" title="Singularity Hub" xmlUrl="https://singularityhub.com/feed/" />
+            <outline type="rss" text="Next Big Future" title="Next Big Future" xmlUrl="https://www.nextbigfuture.com/feed/" />
+            <outline type="rss" text="Futurism" title="Futurism" xmlUrl="https://futurism.com/feed" />
+            <outline type="rss" text="IEEE Future Directions" title="IEEE Future Directions" xmlUrl="https://futuredirections.ieee.org/feed/" />
+            <outline type="rss" text="World Economic Forum - Emerging Technologies" title="World Economic Forum - Emerging Technologies" xmlUrl="https://www.weforum.org/feed/emerging-technologies/" />
+            <outline type="rss" text="Fanatical Futurist" title="Fanatical Futurist" xmlUrl="https://www.fanaticalfuturist.com/feed/" />
+            <outline type="rss" text="Year 2049" title="Year 2049" xmlUrl="https://year2049.substack.com/feed" />
+        </outline>
+        
+        <outline text="AI Ethics & Governance" title="AI Ethics & Governance">
+            <outline type="rss" text="AI Now Institute" title="AI Now Institute" xmlUrl="https://ainowinstitute.org/category/publication/research/feed/" />
+            <outline type="rss" text="Partnership on AI" title="Partnership on AI" xmlUrl="https://partnershiponai.org/feed/" />
+            <outline type="rss" text="Algorithm Watch" title="Algorithm Watch" xmlUrl="https://algorithmwatch.org/en/rss/" />
+            <outline type="rss" text="AI Ethics Lab" title="AI Ethics Lab" xmlUrl="https://aiethicslab.com/feed/" />
+            <outline type="rss" text="Montreal AI Ethics Institute" title="Montreal AI Ethics Institute" xmlUrl="https://montrealethics.ai/feed/" />
+            <outline type="rss" text="Future of Privacy Forum" title="Future of Privacy Forum" xmlUrl="https://fpf.org/feed/" />
+        </outline>
+        
+        <outline text="Technology Policy & Digital Rights" title="Technology Policy & Digital Rights">
+            <outline type="rss" text="Tech Policy Press" title="Tech Policy Press" xmlUrl="https://www.techpolicy.press/feed/" />
+            <outline type="rss" text="Electronic Frontier Foundation" title="Electronic Frontier Foundation" xmlUrl="https://www.eff.org/rss/updates.xml" />
+            <outline type="rss" text="Princeton CITP Freedom to Tinker" title="Princeton CITP Freedom to Tinker" xmlUrl="https://freedom-to-tinker.com/feed/" />
+            <outline type="rss" text="Brookings TechTank" title="Brookings TechTank" xmlUrl="https://www.brookings.edu/topic/technology-and-innovation/feed/" />
+            <outline type="rss" text="Berkeley Law & Technology" title="Berkeley Law & Technology" xmlUrl="https://www.law.berkeley.edu/research/bclt/feed/" />
+            <outline type="rss" text="Center for Strategic & International Studies" title="Center for Strategic & International Studies" xmlUrl="https://www.csis.org/programs/strategic-technologies-program/rss.xml" />
+        </outline>
+        
+        <outline text="International Sources - Europe" title="International Sources - Europe">
+            <outline type="rss" text="The Decoder (Germany)" title="The Decoder (Germany)" xmlUrl="https://the-decoder.com/feed/" />
+            <outline type="rss" text="Max Planck Society" title="Max Planck Society" xmlUrl="https://www.mpg.de/en/research.rss" />
+            <outline type="rss" text="DFKI German Research Center" title="DFKI German Research Center" xmlUrl="https://www.dfki.de/en/web/news/feed/" />
+            <outline type="rss" text="Lamarr Institute (Germany)" title="Lamarr Institute (Germany)" xmlUrl="https://lamarr-institute.org/feed/" />
+            <outline type="rss" text="VentureBeat Europe" title="VentureBeat Europe" xmlUrl="https://venturebeat.com/category/europe/feed/" />
+            <outline type="rss" text="Sifted (European Startups)" title="Sifted (European Startups)" xmlUrl="https://sifted.eu/feed" />
+            <outline type="rss" text="Politico EU Technology" title="Politico EU Technology" xmlUrl="https://www.politico.eu/section/technology/feed/" />
+        </outline>
+        
+        <outline text="International Sources - Asia Pacific" title="International Sources - Asia Pacific">
+            <outline type="rss" text="TechNode (China)" title="TechNode (China)" xmlUrl="https://technode.com/feed/" />
+            <outline type="rss" text="Asian Scientist Magazine" title="Asian Scientist Magazine" xmlUrl="https://www.asianscientist.com/feed/" />
+            <outline type="rss" text="RIKEN (Japan)" title="RIKEN (Japan)" xmlUrl="https://www.riken.jp/en/news/rss.xml" />
+            <outline type="rss" text="Tokyo Institute of Technology" title="Tokyo Institute of Technology" xmlUrl="https://www.titech.ac.jp/english/news/rss.xml" />
+            <outline type="rss" text="South China Morning Post Tech" title="South China Morning Post Tech" xmlUrl="https://www.scmp.com/rss/91/feed" />
+            <outline type="rss" text="KrASIA" title="KrASIA" xmlUrl="https://kr-asia.com/feed" />
+            <outline type="rss" text="e27 (Southeast Asia)" title="e27 (Southeast Asia)" xmlUrl="https://e27.co/feed/" />
+        </outline>
+        
+        <outline text="Transhumanist & Human Enhancement" title="Transhumanist & Human Enhancement">
+            <outline type="rss" text="Transhumanity.net" title="Transhumanity.net" xmlUrl="https://transhumanity.net/feed/" />
+            <outline type="rss" text="H+ Magazine" title="H+ Magazine" xmlUrl="https://www.hplusmagazine.com/feed/" />
+            <outline type="rss" text="Institute for Ethics and Emerging Technologies" title="Institute for Ethics and Emerging Technologies" xmlUrl="https://ieet.org/index.php/IEET2/rss" />
+            <outline type="rss" text="Lifeboat Foundation" title="Lifeboat Foundation" xmlUrl="https://lifeboat.com/blog/feed" />
+            <outline type="rss" text="Humanity Plus" title="Humanity Plus" xmlUrl="https://humanityplus.org/feed/" />
+            <outline type="rss" text="SENS Research Foundation" title="SENS Research Foundation" xmlUrl="https://www.sens.org/feed/" />
+        </outline>
+        
+        <outline text="Academic Research Preprints" title="Academic Research Preprints">
+            <outline type="rss" text="arXiv Computer Science AI" title="arXiv Computer Science AI" xmlUrl="http://export.arxiv.org/rss/cs.AI" />
+            <outline type="rss" text="arXiv Machine Learning" title="arXiv Machine Learning" xmlUrl="http://export.arxiv.org/rss/cs.LG" />
+            <outline type="rss" text="arXiv Robotics" title="arXiv Robotics" xmlUrl="http://export.arxiv.org/rss/cs.RO" />
+            <outline type="rss" text="arXiv Human-Computer Interaction" title="arXiv Human-Computer Interaction" xmlUrl="http://export.arxiv.org/rss/cs.HC" />
+            <outline type="rss" text="bioRxiv Synthetic Biology" title="bioRxiv Synthetic Biology" xmlUrl="https://connect.biorxiv.org/biorxiv_xml.php?subject=synthetic_biology" />
+            <outline type="rss" text="Papers With Code" title="Papers With Code" xmlUrl="https://paperswithcode.com/latest.rss" />
+        </outline>
+        
+        <outline text="Industry & Startup Intelligence" title="Industry & Startup Intelligence">
+            <outline type="rss" text="TechCrunch AI" title="TechCrunch AI" xmlUrl="https://techcrunch.com/category/artificial-intelligence/feed/" />
+            <outline type="rss" text="The Information" title="The Information" xmlUrl="https://www.theinformation.com/feed" />
+            <outline type="rss" text="Crunchbase News" title="Crunchbase News" xmlUrl="https://news.crunchbase.com/feed/" />
+            <outline type="rss" text="VentureBeat AI" title="VentureBeat AI" xmlUrl="https://venturebeat.com/ai/feed/" />
+            <outline type="rss" text="CB Insights Research" title="CB Insights Research" xmlUrl="https://www.cbinsights.com/research/rss" />
+            <outline type="rss" text="PitchBook Blog" title="PitchBook Blog" xmlUrl="https://pitchbook.com/blog/feed" />
+        </outline>
+        
+        <outline text="Independent Researchers & Analysts" title="Independent Researchers & Analysts">
+            <outline type="rss" text="Ben Evans Newsletter" title="Ben Evans Newsletter" xmlUrl="https://www.ben-evans.com/feed" />
+            <outline type="rss" text="Stratechery" title="Stratechery" xmlUrl="https://stratechery.com/feed/" />
+            <outline type="rss" text="Matt Levine Money Stuff" title="Matt Levine Money Stuff" xmlUrl="https://feeds.bloomberg.com/authors/ARbTQVeYRjg/rss.rss" />
+            <outline type="rss" text="Casey Newton Platformer" title="Casey Newton Platformer" xmlUrl="https://www.platformer.news/feed" />
+            <outline type="rss" text="Benedict Evans" title="Benedict Evans" xmlUrl="https://www.ben-evans.com/feed/" />
+            <outline type="rss" text="Dark Futura" title="Dark Futura" xmlUrl="https://darkfutura.substack.com/feed" />
+        </outline>
+        
+    </body>
+</opml>

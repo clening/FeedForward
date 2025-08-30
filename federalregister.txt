@@ -1,0 +1,93 @@
+""" Federal Register Stuff if I add it again """
+
+
+    """ Remember to Put the Federal Government Entities Search here if I decide to put that back in """     
+    async def fetch_government_sources(self, session):
+        """
+        Fetch data from multiple government sources.
+        
+        PURPOSE: Aggregate data from official government APIs.
+        
+        WHY ASYNC: Government APIs can be slow, so process them concurrently.
+        
+        NOTE: This method is defined but not implemented - it calls other
+        methods that aren't defined (fetch_federal_register_data, etc.)
+        """
+        gov_items = []
+        
+        # Federal Register (regulations, rules)
+        fed_items = await self.fetch_federal_register_data(session)
+        gov_items.extend(fed_items)
+        
+        # USASpending.gov (contract awards)
+        usa_items = await self.fetch_usaspending_awards(session)
+        gov_items.extend(usa_items)
+        
+        # Defense.gov RSS (military contracts)
+        def_items = await self.fetch_defense_contracts(session)
+        gov_items.extend(def_items)
+        
+        return gov_items
+    
+    async def fetch_federal_register(self, session):
+        """
+        Fetch documents from the Federal Register API.
+        
+        PURPOSE: The Federal Register contains new regulations, rules, and 
+        legal notices from federal agencies.
+        
+        API DETAILS:
+        - Search by keywords
+        - Filter by publication date
+        - Returns JSON with document metadata
+        
+        WHY FEDERAL REGISTER: Official source for federal regulatory activity.
+        """
+        items = []
+        
+        try:
+            # Build search query from our keywords
+            keywords_query = ' OR '.join([f'"{kw}"' for kw in self.keywords[:3]])
+            
+            # API parameters
+            params = {
+                'conditions[term]': keywords_query,  # What to search for
+                'conditions[publication_date][gte]': (
+                    datetime.now() - timedelta(days=self.days_back)
+                ).strftime('%Y-%m-%d'),  # Date range
+                'per_page': 20,  # Limit results
+                'fields[]': ['title', 'abstract', 'html_url', 'publication_date', 'agencies']
+            }
+            
+            print(f"🏛️  Searching Federal Register for: {keywords_query}")
+            
+            # Make API request
+            async with session.get(self.gov_sources['federal_register'], params=params, timeout=30) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Process each document
+                    for doc in data.get('results', []):
+                        item_id = doc.get('html_url', '')
+                        if item_id and item_id not in self.processed_items:
+                            items.append({
+                                'id': item_id,
+                                'title': doc.get('title', ''),
+                                'content': doc.get('abstract', ''),
+                                'url': item_id,
+                                'date': doc.get('publication_date', ''),
+                                'source': 'Federal Register',
+                                'source_type': 'government',
+                                'agencies': doc.get('agencies', [])
+                            })
+                            
+                            # Mark as processed
+                            self.processed_items[item_id] = datetime.now().isoformat()
+                
+                print(f"📄 Found {len(items)} Federal Register documents")
+        
+        except Exception as e:
+            print(f"⚠️  Error fetching Federal Register: {e}")
+        
+        return items
+    

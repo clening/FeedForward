@@ -1,4 +1,4 @@
-# Enhanced Data Protection Keyword Parser
+# Enhanced RSS Keyword Parser
 Monitors RSS feeds and government sources for data protection related content
 
 ## What it does
@@ -20,5 +20,8 @@ This script is an intelligence gathering system that:
 ## Nifty features: 
  - You can easily add RSS feeds and customize keywords by tweaking the keywords/OPML lists accordingly.
  - Nice entity extraction feature that pulls out companies, government entities, funding amounts, and other elements.
- - Clean visiual interface to make skimming/review even easier. 
+ - Clean visiual interface to make skimming/review even easier.
+
+## TODO
+- Integration with Readwise or Obsidian?
 

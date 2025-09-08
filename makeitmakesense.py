@@ -310,15 +310,15 @@ class PalantirIntelligenceProcessor:
         # Find sentences that contain our keywords
         for sentence in sentences:
             sentence = sentence.strip()
-            if len(sentence) > 30:  # Skip very short sentences
+            if len(sentence) > 10:  # Skip very short sentences
                 sentence_lower = sentence.lower()
                 if any(kw.lower() in sentence_lower for kw in keywords):
                     relevant_sentences.append(sentence)
-                    if len(relevant_sentences) >= 6:  # Limit summary length
-                        break
+                    #if len(relevant_sentences) >= 10:  # Limit summary length
+                    break
         
         if relevant_sentences:
-            summary = ". ".join(relevant_sentences) + "."
+            summary = ". ".join(relevant_sentences) + ". "
         else:
             # Fallback: use first few sentences
             summary = ". ".join([s.strip() for s in sentences[:2] if s.strip()]) + "."

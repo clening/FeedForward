@@ -65,10 +65,10 @@ digital twins
 metaverse privacy
 augmented reality privacy
 deep tech
-BCI
+deeptech
 neural tech
+neuraltech
 Artificial General Intelligence
-AGI
 synthetic biology
 bioengineering
 neuraltechnology
@@ -92,6 +92,7 @@ sentiment analysis
 
 # Communication Surveillance
 end-to-end encryption
+end to end encryption
 client-side scanning
 lawful intercept
 telecommunications interception
@@ -108,6 +109,8 @@ Consent Management Platform
 Real-time Bidding
 Interest-based advertising
 cross-app advertising
+dynamic pricing
+demand pricing
 
 # Technical Frameworks
 Global Privacy Control
@@ -173,6 +176,7 @@ computer vision
 natural language processing
 reinforcement learning from human feedback
 RLHF
+quantum machine learning
 
 # AI Governance & Ethics
 algorithmic accountability
@@ -181,6 +185,8 @@ AI governance
 responsible AI
 AI ethics
 automated decision-making
+automated decisionmaking
+automated decision making
 high-risk AI systems
 AI impact assessment
 algorithmic auditing
@@ -256,5 +262,4 @@ data protection impact assessment
 Palantir Gotham
 Palantir Foundry
 Palantir AIP
-AIP
 Palantir Apollo

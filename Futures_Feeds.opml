@@ -27,7 +27,6 @@
         </outline>
         
         <outline text="Quantum Computing & Information" title="Quantum Computing & Information">
-            <outline type="rss" text="arXiv Quantum Physics" title="arXiv Quantum Physics" xmlUrl="https://arxiv.org/rss/news.xml" />
             <outline type="rss" text="IBM Quantum Network" title="IBM Quantum Network" xmlUrl="https://research.ibm.com/rss" />
             <outline type="rss" text="Quantum Frontiers (Caltech)" title="Quantum Frontiers (Caltech)" xmlUrl="https://quantumfrontiers.com/feed/" />
             <outline type="rss" text="Quantum Journal" title="Quantum Journal" xmlUrl="https://quantum-journal.org/feed/" />
@@ -72,7 +71,7 @@
             <outline type="rss" text="Ars Technica" title="Ars Technica" xmlUrl="https://feeds.arstechnica.com/arstechnica/index" />
         </outline>
         
-        <outline text="Futurism & Speculative Technology" title="Futurism & Speculative Technology">
+        <outline text="Futurism, Alternative Governments  & Speculative Technology" title="Futurism & Speculative Technology">
             <outline type="rss" text="Singularity Hub" title="Singularity Hub" xmlUrl="https://singularityhub.com/feed/" />
             <outline type="rss" text="Next Big Future" title="Next Big Future" xmlUrl="https://www.nextbigfuture.com/feed/" />
             <outline type="rss" text="Futurism" title="Futurism" xmlUrl="https://futurism.com/feed" />
@@ -80,7 +79,9 @@
             <outline type="rss" text="World Economic Forum - Emerging Technologies" title="World Economic Forum - Emerging Technologies" xmlUrl="https://flipboard.com/@WEF" />
             <outline type="rss" text="Fanatical Futurist" title="Fanatical Futurist" xmlUrl="https://www.fanaticalfuturist.com/feed/" />
             <outline type="rss" text="Year 2049" title="Year 2049" xmlUrl="https://year2049.substack.com/feed" />
-        </outline>
+            <outline type="rss" text="Nerd Reich" title="Nerd Reich" xmlUrl="https://www.thenerdreich.com/rss/" />
+            
+	</outline>
         
         <outline text="AI Ethics & Governance" title="AI Ethics & Governance">
             <outline type="rss" text="AI Now Institute" title="AI Now Institute" xmlUrl="https://ainowinstitute.org/publications/feed" />
@@ -129,9 +130,6 @@
         </outline>
         
         <outline text="Academic Research Preprints" title="Academic Research Preprints">
-            <outline type="rss" text="arXiv Computer Science AI" title="arXiv Computer Science AI" xmlUrl="http://export.arxiv.org/rss/cs.AI" />
-            <outline type="rss" text="arXiv Machine Learning" title="arXiv Machine Learning" xmlUrl="http://export.arxiv.org/rss/cs.LG" />
-            <outline type="rss" text="arXiv Robotics" title="arXiv Robotics" xmlUrl="http://export.arxiv.org/rss/cs.RO" />
             <outline type="rss" text="arXiv Human-Computer Interaction" title="arXiv Human-Computer Interaction" xmlUrl="http://export.arxiv.org/rss/cs.HC" />
             <outline type="rss" text="bioRxiv Synthetic Biology" title="bioRxiv Synthetic Biology" xmlUrl="https://connect.biorxiv.org/biorxiv_xml.php?subject=synthetic_biology" />
             <outline type="rss" text="Papers With Code" title="Papers With Code" xmlUrl="https://paperswithcode.com/latest.rss" />

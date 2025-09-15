@@ -52,7 +52,7 @@ class PalantirIntelligenceProcessor:
         PARAMETERS:
         - opml_file: File containing RSS feed URLs (OPML format)
         - output_dir: Where to save reports and history
-        - keywords: List of terms to search for
+        - keywords: List of terms to search for (or tuple with categories)
         - days_back: How many days of historical data to process
         
         WHY THESE PARAMETERS: Flexibility to change what we monitor,
@@ -60,12 +60,20 @@ class PalantirIntelligenceProcessor:
         """
         self.opml_file = opml_file
         self.output_dir = output_dir
-        self.keywords = keywords or []
+        
+        # Handle both old format (list) and new format (tuple with categories)
+        if isinstance(keywords, tuple) and len(keywords) == 2:
+            self.keywords, self.keyword_categories = keywords
+        else:
+            self.keywords = keywords or []
+            self.keyword_categories = {}
+        
         self.days_back = days_back
         
         # Storage for feeds and results
         self.feeds = []  # List of RSS feed URLs and metadata
         self.results = {}  # Dictionary of processed intelligence items
+        self.categorized_results = {}  # Results organized by category
         
         # History tracking to avoid reprocessing same items
         self.history_file = os.path.join(output_dir, "processed_intelligence.pkl")
@@ -165,22 +173,54 @@ class PalantirIntelligenceProcessor:
     
     def load_keywords(self, file_path):
         """
-        Load keywords from a text file (one keyword per line).
+        Load keywords from a structured text file with categories.
         
-        PURPOSE: External keyword configuration - allows changing what we monitor
-        without modifying code.
+        PURPOSE: External keyword configuration with category organization
+        to reduce false positives and enable categorized output.
         
-        WHY FILE-BASED: Easier to maintain keyword lists, can be edited by 
-        non-programmers, version controlled separately.
+        STRUCTURE: Returns dict with categories and their keywords
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                keywords = [line.strip() for line in f if line.strip()]
-                print(f"📋 Loaded {len(keywords)} keywords from {file_path}")
-                return keywords
+                lines = [line.strip() for line in f if line.strip()]
+            
+            categories = {}
+            current_category = None
+            current_subcategory = None
+            
+            for line in lines:
+                if line.startswith('#') and not line.startswith('##'):
+                    # Main category (e.g., #Social)
+                    current_category = line[1:].strip()
+                    if current_category not in categories:
+                        categories[current_category] = {}
+                    current_subcategory = None
+                elif line.startswith('##'):
+                    # Subcategory (e.g., ## Privacy Advocacy & Industry Organizations)
+                    current_subcategory = line[2:].strip()
+                    if current_category and current_subcategory:
+                        categories[current_category][current_subcategory] = []
+                elif line and current_category:
+                    # Keyword line
+                    if current_subcategory:
+                        categories[current_category][current_subcategory].append(line)
+                    else:
+                        # Handle keywords directly under main category
+                        if 'General' not in categories[current_category]:
+                            categories[current_category]['General'] = []
+                        categories[current_category]['General'].append(line)
+            
+            # Also create flat list for backward compatibility
+            flat_keywords = []
+            for category in categories.values():
+                for subcategory in category.values():
+                    flat_keywords.extend(subcategory)
+            
+            print(f"📋 Loaded {len(flat_keywords)} keywords in {len(categories)} categories from {file_path}")
+            return flat_keywords, categories
         except Exception as e:
             print(f"⚠️  Error loading keywords: {e}")
-            return []
+            return [], {}
     
     def parse_opml(self):
         """
@@ -232,27 +272,70 @@ class PalantirIntelligenceProcessor:
             
     def contains_keywords(self, text):
         """
-        Check if text contains any of our target keywords.
+        Check if text contains any of our target keywords with improved matching.
         
-        PURPOSE: Core filtering logic - determines if content is relevant.
+        PURPOSE: Core filtering logic with reduced false positives.
         
-        RETURNS: (bool, list) - whether keywords found and which ones
+        IMPROVEMENTS:
+        - Whole word matching for short keywords (3 chars or less)
+        - Context-aware matching
+        - Category tracking for matched keywords
         
-        WHY CASE-INSENSITIVE: Keywords might appear in different cases
-        in source material.
+        RETURNS: (bool, list, dict) - whether keywords found, which ones, and their categories
         """
         if not self.keywords:
-            return True, []  # If no keywords specified, include everything
+            return True, [], {}
         
         text_lower = text.lower()
         matched = []
+        matched_categories = {}
         
-        # Check each keyword against the text
         for keyword in self.keywords:
-            if keyword.lower() in text_lower:
-                matched.append(keyword)
+            keyword_lower = keyword.lower()
+            
+            # For very short keywords (like NVE, LLM, BIPA), use whole word matching
+            if len(keyword) <= 4 and keyword.isupper():
+                # Use word boundaries to avoid partial matches
+                import re
+                pattern = r'\b' + re.escape(keyword_lower) + r'\b'
+                if re.search(pattern, text_lower):
+                    matched.append(keyword)
+                    # Find which category this keyword belongs to
+                    category_info = self.find_keyword_category(keyword)
+                    if category_info:
+                        main_cat, sub_cat = category_info
+                        if main_cat not in matched_categories:
+                            matched_categories[main_cat] = {}
+                        if sub_cat not in matched_categories[main_cat]:
+                            matched_categories[main_cat][sub_cat] = []
+                        matched_categories[main_cat][sub_cat].append(keyword)
+            else:
+                # For longer keywords, use substring matching
+                if keyword_lower in text_lower:
+                    matched.append(keyword)
+                    # Find which category this keyword belongs to
+                    category_info = self.find_keyword_category(keyword)
+                    if category_info:
+                        main_cat, sub_cat = category_info
+                        if main_cat not in matched_categories:
+                            matched_categories[main_cat] = {}
+                        if sub_cat not in matched_categories[main_cat]:
+                            matched_categories[main_cat][sub_cat] = []
+                        matched_categories[main_cat][sub_cat].append(keyword)
         
-        return len(matched) > 0, matched
+        return len(matched) > 0, matched, matched_categories
+    
+    def find_keyword_category(self, keyword):
+        """
+        Find which category and subcategory a keyword belongs to.
+        
+        RETURNS: tuple (main_category, subcategory) or None if not found
+        """
+        for main_cat, subcategories in self.keyword_categories.items():
+            for sub_cat, keywords in subcategories.items():
+                if keyword in keywords:
+                    return (main_cat, sub_cat)
+        return None
     
     def extract_content(self, entry):
         """
@@ -433,8 +516,8 @@ class PalantirIntelligenceProcessor:
                     title = entry.get('title', '')
                     content = self.extract_content(entry)
                     
-                    # Check for keyword matches
-                    has_keywords, matched_keywords = self.contains_keywords(f"{title} {content}")
+                    # Check for keyword matches with category tracking
+                    has_keywords, matched_keywords, matched_categories = self.contains_keywords(f"{title} {content}")
                     
                     if has_keywords:
                         # Generate summary focusing on keywords
@@ -444,7 +527,7 @@ class PalantirIntelligenceProcessor:
                         entities = self.extract_entities(f"{title} {content}")
                         
                         # Store the processed item
-                        items.append({
+                        item = {
                             'id': entry_url,
                             'title': title,
                             'content': content,
@@ -454,8 +537,19 @@ class PalantirIntelligenceProcessor:
                             'source': feed['title'],
                             'source_type': 'rss',
                             'keywords': matched_keywords,
+                            'categories': matched_categories,
                             'entities': entities
-                        })
+                        }
+                        items.append(item)
+                        
+                        # Also organize by categories for categorized output
+                        for main_cat, subcategories in matched_categories.items():
+                            if main_cat not in self.categorized_results:
+                                self.categorized_results[main_cat] = {}
+                            for sub_cat, keywords in subcategories.items():
+                                if sub_cat not in self.categorized_results[main_cat]:
+                                    self.categorized_results[main_cat][sub_cat] = []
+                                self.categorized_results[main_cat][sub_cat].append(item)
                         
                         # Mark as processed to avoid duplicates
                         self.processed_items[entry_url] = datetime.now().isoformat()
@@ -511,16 +605,16 @@ class PalantirIntelligenceProcessor:
     
     def generate_intelligence_report(self):
         """
-        Generate comprehensive HTML intelligence report.
+        Generate comprehensive HTML intelligence report with category organization.
         
-        PURPOSE: Create a readable, formatted report of all findings.
+        PURPOSE: Create a readable, formatted report organized by categories.
         
         WHY HTML: Rich formatting, can include links, easy to view and share.
         
         WORKFLOW:
         1. Sort results by date
         2. Generate statistics
-        3. Create HTML content
+        3. Create categorized HTML content
         4. Save to file
         """
         if not self.results:
@@ -543,8 +637,8 @@ class PalantirIntelligenceProcessor:
         # Generate summary statistics
         stats = self.generate_stats(sorted_items)
         
-        # Create HTML content
-        html = self.generate_html_content(sorted_items, stats, timestamp)
+        # Create categorized HTML content
+        html = self.generate_categorized_html_content(sorted_items, stats, timestamp)
         
         # Write to file
         with open(report_path, 'w', encoding='utf-8') as f:
@@ -598,6 +692,223 @@ class PalantirIntelligenceProcessor:
                 stats['total_amounts'].extend(entities['amounts'])
         
         return stats
+    
+    def generate_categorized_html_content(self, items, stats, timestamp):
+        """
+        Generate categorized HTML content organized by keyword categories.
+        
+        PURPOSE: Create formatted report showing results grouped by categories
+        and subcategories for better organization and analysis.
+        """
+        # HTML header with enhanced CSS for categories
+        html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categorized Intelligence Report - {timestamp}</title>
+    <style>
+        body {{
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            line-height: 1.6;
+        }}
+        .header {{
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }}
+        .stats {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }}
+        .stat-card {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }}
+        .stat-number {{
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }}
+        .category-section {{
+            background: white;
+            margin: 30px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }}
+        .category-header {{
+            background: #34495e;
+            color: white;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }}
+        .subcategory {{
+            border-left: 5px solid #3498db;
+            margin: 20px;
+            background: #ecf0f1;
+            border-radius: 5px;
+        }}
+        .subcategory-header {{
+            background: #bdc3c7;
+            padding: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+        }}
+        .intelligence-item {{
+            background: white;
+            margin: 10px 20px 20px 20px;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 3px solid #3498db;
+        }}
+        .source-badge {{
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-right: 10px;
+            color: white;
+            background-color: #e74c3c;
+        }}
+        .summary {{
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 3px solid #3498db;
+        }}
+        .keywords {{
+            margin: 15px 0;
+        }}
+        .keyword {{
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }}
+        .metadata {{
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }}
+        a {{ color: #2980b9; text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+        .toc {{
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }}
+        .toc h3 {{ margin-top: 0; }}
+        .toc ul {{ list-style-type: none; padding-left: 0; }}
+        .toc li {{ margin: 5px 0; }}
+        .toc a {{ text-decoration: none; color: #3498db; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Categorized Intelligence Report</h1>
+        <p>Generated: {datetime.now().strftime('%B %d, %Y at %H:%M UTC')}</p>
+        <p>Monitoring Period: Last {self.days_back} day(s)</p>
+    </div>
+    
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{stats['total_items']}</div>
+            <div>Total Intelligence Items</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{len(self.categorized_results)}</div>
+            <div>Categories Found</div>
+        </div>
+"""
+        
+        # Add source breakdown statistics
+        for source_type, count in stats['source_breakdown'].items():
+            html += f"""
+        <div class="stat-card">
+            <div class="stat-number">{count}</div>
+            <div>{source_type.replace('_', ' ').title()} Sources</div>
+        </div>
+"""
+        
+        html += "</div>"
+        
+        # Generate table of contents
+        if self.categorized_results:
+            html += """
+    <div class="toc">
+        <h3>📋 Table of Contents</h3>
+        <ul>
+"""
+            for main_cat in sorted(self.categorized_results.keys()):
+                item_count = sum(len(items) for items in self.categorized_results[main_cat].values())
+                html += f'            <li><a href="#{main_cat.replace(" ", "_")}">{main_cat}</a> ({item_count} items)</li>\n'
+            
+            html += """        </ul>
+    </div>
+"""
+        
+        # Generate categorized content
+        if self.categorized_results:
+            for main_cat in sorted(self.categorized_results.keys()):
+                html += f"""
+    <div class="category-section" id="{main_cat.replace(' ', '_')}">
+        <div class="category-header">
+            📁 {main_cat}
+        </div>
+"""
+                
+                for sub_cat in sorted(self.categorized_results[main_cat].keys()):
+                    items_in_subcat = self.categorized_results[main_cat][sub_cat]
+                    # Remove duplicates by URL
+                    unique_items = {item['url']: item for item in items_in_subcat}.values()
+                    
+                    html += f"""
+        <div class="subcategory">
+            <div class="subcategory-header">
+                📂 {sub_cat} ({len(unique_items)} items)
+            </div>
+"""
+                    
+                    for item in unique_items:
+                        html += self.generate_item_html_categorized(item)
+                    
+                    html += "        </div>"
+                
+                html += "    </div>"
+        else:
+            html += """
+    <div class="category-section">
+        <div class="category-header">No categorized results found</div>
+        <p>Items may not have matched specific categories or keywords.txt structure may need adjustment.</p>
+    </div>
+"""
+        
+        html += """
+</body>
+</html>
+"""
+        return html
     
     def generate_html_content(self, items, stats, timestamp):
         """
@@ -777,6 +1088,45 @@ class PalantirIntelligenceProcessor:
 """
         return html
     
+    def generate_item_html_categorized(self, item):
+        """
+        Generate HTML for a single intelligence item in categorized view.
+        """
+        html = f"""
+            <div class="intelligence-item">
+                <h4><a href="{item.get('url', '#')}" target="_blank">{item.get('title', 'Untitled')}</a></h4>
+                
+                <span class="source-badge">{item.get('source_type', 'unknown').replace('_', ' ').title()}</span>
+"""
+        
+        # Add summary section
+        if item.get('summary'):
+            html += f"""
+                <div class="summary">
+                    <strong>🔍 Summary:</strong><br>
+                    {item['summary'].replace('\\n', '<br>')}
+                </div>
+"""
+        
+        # Add keywords section
+        if item.get('keywords'):
+            html += f"""
+                <div class="keywords">
+                    <strong>🎯 Keywords:</strong>
+                    {' '.join([f'<span class="keyword">{kw}</span>' for kw in item['keywords']])}
+                </div>
+"""
+        
+        # Add metadata
+        html += f"""
+                <div class="metadata">
+                    <strong>Source:</strong> {item.get('source', 'Unknown')}<br>
+                    <strong>Date:</strong> {item.get('date', 'Unknown')}
+                </div>
+            </div>
+"""
+        return html
+    
     def generate_item_html(self, item, index):
         """
         Generate HTML for a single intelligence item.
@@ -890,13 +1240,14 @@ Examples:
     
     args = parser.parse_args()
     
-    # Load keywords from file
+    # Load keywords from file using new structured format
     keywords = []
+    keyword_categories = {}
     if os.path.exists(args.keywords):
         try:
-            with open(args.keywords, 'r', encoding='utf-8') as f:
-                keywords = [line.strip() for line in f if line.strip()]
-            print(f"📋 Loaded {len(keywords)} keywords from {args.keywords}")
+            # Create a temporary processor to use the load_keywords method
+            temp_processor = PalantirIntelligenceProcessor()
+            keywords, keyword_categories = temp_processor.load_keywords(args.keywords)
         except Exception as e:
             print(f"⚠️  Error loading keywords from {args.keywords}: {e}")
             return
@@ -906,9 +1257,9 @@ Examples:
     
     # Initialize the intelligence processor with the specified OPML file
     processor = PalantirIntelligenceProcessor(
-        opml_file=args.feeds,  # ← THIS IS THE KEY FIX - use args.feeds instead of empty string
+        opml_file=args.feeds,
         output_dir=args.output_dir,
-        keywords=keywords,
+        keywords=(keywords, keyword_categories),  # Pass as tuple
         days_back=args.days_back
     )
     

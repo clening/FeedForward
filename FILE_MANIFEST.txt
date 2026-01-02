@@ -1,0 +1,17 @@
+.:
+total 97
+drwxr-xr-x 1 999 root     0 Dec 31 19:07 .
+drwxr-xr-x 1 999 root     0 Dec 31 19:06 ..
+-rw-r--r-- 1 999 root   575 Dec 31 19:07 .env.example
+-rw-r--r-- 1 999 root   279 Dec 31 19:07 .gitignore
+-rw-r--r-- 1 999 root     0 Dec 31 19:07 FILE_MANIFEST.txt
+-rw-r--r-- 1 999 root  8826 Dec 31 19:07 IMPLEMENTATION_SUMMARY.md
+-rw-r--r-- 1 999 root  2500 Dec 31 19:07 QUICKREF.md
+-rw-r--r-- 1 999 root  9196 Dec 31 19:07 README.md
+-rw-r--r-- 1 999 root 14209 Dec 31 19:07 article_processor.py
+-rw-r--r-- 1 999 root  2628 Dec 31 19:07 export_to_json.py
+-rw-r--r-- 1 999 root 50062 Dec 31 19:07 makeitmakesense.py
+-rw-r--r-- 1 999 root   427 Dec 31 19:07 requirements.txt
+-rw-r--r-- 1 999 root  1844 Dec 31 19:07 sample_input.json
+-rw-r--r-- 1 999 root  2755 Dec 31 19:07 setup.sh
+-rw-r--r-- 1 999 root  3057 Dec 31 19:07 sync_to_obsidian.py

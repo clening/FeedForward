@@ -1,19 +1,42 @@
-# Ignore Python virtual environment
-venv/
-env/
-.env/
+# Environment and secrets
+.env
+*.key
+*.pem
 
-# Ignore Python cache files
+# User configuration files (use .example versions as templates)
+keywords.txt
+*.opml
+!*.example.opml
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
 
-# Ignore log files
-*.log
-
-# Ignore older stuff & outputs
-older/
+# Output directories
 output/
+processed/
+*.pkl
+*.log
+older/
 
-Futures_Feeds-old.opml
-keywords.txt.save
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+test_*.json
+sample_*.json

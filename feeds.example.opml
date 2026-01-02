@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+  <head>
+    <title>Example RSS Feeds</title>
+    <dateCreated>2025-01-01</dateCreated>
+  </head>
+  <body>
+    <outline text="Example Feeds" title="Example Feeds">
+
+      <!-- Technology News -->
+      <outline text="MIT Technology Review" title="MIT Technology Review"
+               type="rss" xmlUrl="https://www.technologyreview.com/feed/" />
+
+      <outline text="Ars Technica" title="Ars Technica"
+               type="rss" xmlUrl="https://feeds.arstechnica.com/arstechnica/index" />
+
+      <outline text="Wired" title="Wired"
+               type="rss" xmlUrl="https://www.wired.com/feed/rss" />
+
+      <!-- Science -->
+      <outline text="Nature News" title="Nature News"
+               type="rss" xmlUrl="https://www.nature.com/nature.rss" />
+
+      <outline text="Science Magazine" title="Science Magazine"
+               type="rss" xmlUrl="https://www.science.org/rss/news_current.xml" />
+
+      <!-- Add your own feeds here -->
+      <!-- Find RSS feed URLs from your favorite websites and add them following the same format -->
+
+    </outline>
+  </body>
+</opml>

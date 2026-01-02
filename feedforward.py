@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Enhanced Data Protection Keyword Parser
-Monitors RSS feeds and government sources for data protection related content
+RSS Intelligence Processor
+Automated futures research and intelligence gathering from RSS feeds
 
 OVERVIEW:
 This script is an intelligence gathering system that:
 1. Reads RSS feeds from an OPML file
-2. Searches government APIs (Federal Register, etc.)
-3. Filters content based on keywords from a provided text file
-4. Generates HTML reports of relevant findings
+2. Filters content based on structured keywords from a text file
+3. Generates categorized HTML reports of relevant findings
+4. (Optional) Processes articles with Claude API for summarization
+5. Creates formatted Obsidian notes ready for review
 
 """
 
@@ -30,11 +31,22 @@ import time
 import asyncio  # For concurrent processing
 import aiohttp  # Async HTTP requests
 from typing import Dict, List, Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Import article processor for integrated workflow
+try:
+    from article_processor import ArticleProcessor
+    ARTICLE_PROCESSOR_AVAILABLE = True
+except ImportError:
+    ARTICLE_PROCESSOR_AVAILABLE = False
 
 # Suppress warnings from BeautifulSoup about HTML-like strings
 warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
-class PalantirIntelligenceProcessor:
+class IntelligenceProcessor:
     """
     Main class that handles all intelligence gathering operations.
     
@@ -473,13 +485,13 @@ class PalantirIntelligenceProcessor:
     async def process_rss_feeds(self, session):
         """
         Process all RSS feeds asynchronously.
-        
+
         PURPOSE: Main RSS processing logic - fetches feeds, extracts content,
         filters by keywords, and structures results.
-        
+
         WHY ASYNC: RSS feeds can be slow to fetch, so process multiple
         feeds concurrently for better performance.
-        
+
         WORKFLOW:
         1. Iterate through each RSS feed
         2. Parse RSS XML
@@ -489,17 +501,22 @@ class PalantirIntelligenceProcessor:
         6. Store results and mark as processed
         """
         items = []
-        
+
         for feed in self.feeds:
             if feed.get('type') != 'rss':
                 continue  # Skip non-RSS feeds
-                
+
             print(f"📡 Processing: {feed['title']}")
-            
+
             try:
-                # Use feedparser library to handle RSS complexity
-                parsed_feed = feedparser.parse(feed['url'])
-                
+                # Use feedparser library with timeout to handle RSS complexity
+                # Run in executor to avoid blocking and enable timeout
+                loop = asyncio.get_event_loop()
+                parsed_feed = await asyncio.wait_for(
+                    loop.run_in_executor(None, feedparser.parse, feed['url']),
+                    timeout=30.0  # 30 second timeout per feed
+                )
+
                 # Process each entry in the feed
                 for entry in parsed_feed.entries[:50]:  # Limit entries per feed
                     entry_url = entry.get('link', '')
@@ -556,7 +573,9 @@ class PalantirIntelligenceProcessor:
                 
                 # Rate limiting to be nice to RSS servers
                 await asyncio.sleep(1)
-                
+
+            except asyncio.TimeoutError:
+                print(f"⏱️  Timeout processing {feed['title']} - skipping after 30 seconds")
             except Exception as e:
                 print(f"⚠️  Error processing {feed['title']}: {e}")
         
@@ -1198,8 +1217,15 @@ class PalantirIntelligenceProcessor:
 """
         return html
 
-def emailit(f):    
-    os.system(f'(echo "Subject: Daily Intel Report"; echo "Content-Type: text/html"; echo; cat {f}) | ssmtp dbenbennbrave@gmail.com')
+def emailit(f):
+    """
+    Email the HTML report if EMAIL_ADDRESS is configured in .env
+    """
+    email_address = os.getenv('EMAIL_ADDRESS')
+    if email_address:
+        os.system(f'(echo "Subject: Daily Intel Report"; echo "Content-Type: text/html"; echo; cat {f}) | ssmtp {email_address}')
+    else:
+        print("ℹ️  No EMAIL_ADDRESS configured - skipping email")
 
     
 def main():
@@ -1220,23 +1246,34 @@ def main():
     """
     # Set up command-line argument parsing
     parser = argparse.ArgumentParser(
-        description="Enhanced Intelligence Processor",
+        description="RSS Intelligence Processor - Automated futures research and article processing",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 makeitmakesense.py -k keywords.txt -f Reader_Feeds.opml -d 3
-  python3 makeitmakesense.py -k keywords.txt -f Emerging_Tech_Feeds.opml -d 3
-  python3 makeitmakesense.py -k keywords.txt --gov -f Reader_Feeds.opml -d 3
+  python3 feedforward.py                                    # Use defaults from .env
+  python3 feedforward.py -p                                 # Process articles with Claude
+  python3 feedforward.py -k keywords.txt -f feeds.opml -d 3 # Custom files
+  python3 feedforward.py -p -l 10                           # Process 10 articles
         """
     )
     
-    # Define command-line arguments
-    parser.add_argument("--keywords", "-k", default="keywords.txt", help="Keywords file (default: keywords.txt)")
-    parser.add_argument("--feeds", "-f", default="Reader_Feeds.opml", help="OPML file containing RSS feeds (default: Reader_Feeds.opml)")
-    parser.add_argument("--output-dir", "-o", default="output", help="Output directory (default: output)")
-    parser.add_argument("--days-back", "-d", type=int, default=3, help="Days back to search (default: 3)")
+    # Define command-line arguments with defaults from .env
+    parser.add_argument("--keywords", "-k",
+                       default=os.getenv("KEYWORDS_FILE", "keywords.txt"),
+                       help=f"Keywords file (default: from .env or keywords.txt)")
+    parser.add_argument("--feeds", "-f",
+                       default=os.getenv("FEEDS_FILE", "feeds.opml"),
+                       help=f"OPML file containing RSS feeds (default: from .env or feeds.opml)")
+    parser.add_argument("--output-dir", "-o",
+                       default=os.getenv("OUTPUT_DIR", "output"),
+                       help=f"Output directory (default: from .env or output)")
+    parser.add_argument("--days-back", "-d", type=int,
+                       default=int(os.getenv("DAYS_BACK", "5")),
+                       help=f"Days back to search (default: from .env or 5)")
     parser.add_argument("--gov", action="store_true", help="Include government sources")
     parser.add_argument("--reset", action="store_true", help="Reset processing history")
+    parser.add_argument("--process-articles", "-p", action="store_true", help="Process articles with Claude and create Obsidian notes")
+    parser.add_argument("--article-limit", "-l", type=int, default=None, help="Limit number of articles to process (default: all)")
     
     args = parser.parse_args()
     
@@ -1246,7 +1283,7 @@ Examples:
     if os.path.exists(args.keywords):
         try:
             # Create a temporary processor to use the load_keywords method
-            temp_processor = PalantirIntelligenceProcessor()
+            temp_processor = IntelligenceProcessor()
             keywords, keyword_categories = temp_processor.load_keywords(args.keywords)
         except Exception as e:
             print(f"⚠️  Error loading keywords from {args.keywords}: {e}")
@@ -1256,7 +1293,7 @@ Examples:
         return
     
     # Initialize the intelligence processor with the specified OPML file
-    processor = PalantirIntelligenceProcessor(
+    processor = IntelligenceProcessor(
         opml_file=args.feeds,
         output_dir=args.output_dir,
         keywords=(keywords, keyword_categories),  # Pass as tuple
@@ -1292,6 +1329,32 @@ Examples:
             report = processor.generate_intelligence_report()
             emailit(report)
             print("✅ Intelligence collection complete!")
+
+            # Process articles with Claude if requested
+            if args.process_articles:
+                if not ARTICLE_PROCESSOR_AVAILABLE:
+                    print("⚠️  Article processor not available. Install dependencies:")
+                    print("   pip install anthropic trafilatura tqdm")
+                else:
+                    print("\n" + "="*60)
+                    print("🤖 Starting article processing with Claude...")
+                    print("="*60 + "\n")
+
+                    # Convert processor results to list format for ArticleProcessor
+                    items_list = list(processor.results.values())
+
+                    # Limit if specified
+                    if args.article_limit:
+                        items_list = items_list[:args.article_limit]
+
+                    # Initialize and run article processor
+                    try:
+                        article_proc = ArticleProcessor()
+                        loop.run_until_complete(article_proc.process_articles(items_list, limit=args.article_limit))
+                        print("\n✅ Article processing complete!")
+                        print(f"📁 Processed notes saved to: {article_proc.obsidian_vault_path}")
+                    except Exception as e:
+                        print(f"❌ Error during article processing: {e}")
         else:
             print("🔭 No new intelligence items found")
             

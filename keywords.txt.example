@@ -1,0 +1,53 @@
+# KEYWORDS CONFIGURATION FILE
+#
+# This file defines keywords for filtering RSS feed articles.
+# Replace these examples with keywords relevant to your research interests.
+#
+# STRUCTURE:
+# - Main categories start with single # (e.g., #Social)
+# - Subcategories start with ## (e.g., ## Healthcare)
+# - Keywords are listed one per line under their category
+#
+# IMPORTANT TIPS:
+# - Avoid short acronyms (3-4 letters) that are common words or word parts
+#   Examples to AVOID: "AI", "IoT", "abs", "sync", "use", "IT"
+#   These will match unintended words and create false positives
+# - Use longer, specific phrases when possible
+# - Keywords are case-insensitive
+# - The tool uses whole-word matching for short uppercase keywords
+
+#Social
+## Example Subcategory 1
+social justice
+healthcare policy
+democratic governance
+
+## Example Subcategory 2
+inequality
+public health
+community organizing
+
+# Technological
+## Example Tech Category
+artificial intelligence
+machine learning
+quantum computing
+biotechnology
+
+## Another Tech Category
+renewable energy
+automation
+blockchain technology
+
+# Environmental
+## Climate
+climate change
+carbon emissions
+sustainability
+
+## Conservation
+biodiversity
+ecosystem restoration
+conservation biology
+
+# Add more categories as needed following the same pattern

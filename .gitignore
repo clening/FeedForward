@@ -25,6 +25,7 @@ processed/
 *.pkl
 *.log
 older/
+.claude/
 
 # IDE
 .vscode/

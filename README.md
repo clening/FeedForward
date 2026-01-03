@@ -1,198 +1,157 @@
-# Article Automation System
+# FeedForward
 
-Automated pipeline for processing RSS feed intelligence, fetching full articles, summarizing with Claude AI, and creating Obsidian notes.
+**Automated RSS intelligence processing for futures research**
+
+FeedForward monitors RSS feeds, filters by keywords, summarizes articles with AI, and creates ready-to-review Obsidian notes. Built for futures forecasting and weak signal detection.
 
 ## 🎯 What This Does
 
-Transforms your workflow from:
+**Before FeedForward:**
 ```
-RSS emails → Manual Gmail review → Open in browser → 
-Leo summary → Copy/paste → Web Clipper → Manual tagging
+Morning routine: Check RSS → Open 30 tabs → Read articles →
+Copy to Leo AI → Summarize → Copy summary → Paste into Obsidian →
+Add tags → Repeat 30 times → 90 minutes gone
 ```
 
-To:
+**After FeedForward:**
 ```
-Cronjob runs feedforward.py → 
-article_processor.py handles everything → 
-Review polished notes in Obsidian
+Morning routine: Run feedforward.py -p → Get coffee →
+Review polished notes in Obsidian → 15 minutes
 ```
+
+## ⚡ Quick Start
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Configure
+cp .env.example .env
+cp keywords.txt.example keywords.txt
+cp feeds.example.opml feeds.opml
+# Edit these files with your settings
+
+# 3. Run
+python3 feedforward.py -p
+```
+
+See [SETUP.md](SETUP.md) for detailed instructions.
 
 ## 📋 Features
 
-- **Intelligent Content Fetching**: Multi-method approach (trafilatura → Jina Reader → Playwright fallback)
-- **AI Summarization**: Uses Claude Sonnet 4 for high-quality summaries
-- **Auto-tagging**: Combines keyword matching + Claude's AI suggestions
-- **Batch Processing**: Handles 10-100+ articles concurrently
-- **Error Resilience**: One failed article doesn't kill the batch
-- **Obsidian Integration**: Creates properly formatted notes with frontmatter
+- **Smart Keyword Filtering**: Organize keywords into categories for better signal detection
+- **Multi-Source Content Fetching**: trafilatura → Jina Reader fallback chain
+- **AI Summarization**: Claude Sonnet 4 generates bullet-point summaries
+- **Auto-Tagging**: Combines keyword matching + Claude's suggestions
+- **Rate Limit Handling**: Exponential backoff handles Claude API limits gracefully
+- **Direct Obsidian Integration**: Saves formatted notes directly to your vault
+- **Deduplication**: Pickle-based tracking prevents reprocessing articles
 
-## 🚀 Setup
+## 🚀 Usage
 
-### 1. Install Dependencies
-
-```bash
-cd /home/claude/article-automation
-pip install -r requirements.txt --break-system-packages
-
-# Install Playwright browsers (for fallback scraping)
-playwright install chromium
-```
-
-### 2. Configure Environment
+### Basic Workflow
 
 ```bash
-# Copy example env file
-cp .env.example .env
+# Generate HTML report only (no AI processing)
+python3 feedforward.py
 
-# Edit .env and add your API key
-nano .env
+# Full pipeline: RSS → Filter → Summarize → Obsidian notes
+python3 feedforward.py -p
+
+# Process limited number of articles (for testing)
+python3 feedforward.py -p -l 10
+
+# Custom configuration
+python3 feedforward.py -k my_keywords.txt -f my_feeds.opml -d 7
 ```
 
-Required configuration in `.env`:
-```env
-ANTHROPIC_API_KEY=sk-ant-xxxxx  # Get from https://console.anthropic.com/
-OBSIDIAN_VAULT_PATH=Future Trends/Clippings/Unreviewed
-```
+### Automated Daily Run
 
-### 3. Test the System
-
+Add to crontab:
 ```bash
-# First, make sure you have recent output from feedforward.py
-# If you don't have a JSON file yet, export from the pickle:
-python3 export_to_json.py --pickle /path/to/output/processed_intelligence.pkl
-
-# Test with 10 articles
-python3 article_processor.py output/intelligence_results_*.json --test
-
-# Check the results
-ls -l processed/
+# Run every morning at 6 AM
+0 6 * * * cd /path/to/feedforward && python3 feedforward.py -p
 ```
-
-## 📖 Complete Workflow
-
-### Daily Automated Workflow
-
-1. **Cronjob runs feedforward.py** (you already have this)
-   ```bash
-   # Your existing crontab
-   0 9 * * * cd ~/makeitmakesense && python3 feedforward.py -k keywords.txt -f Futures_Feeds.opml -d 1
-   ```
-
-2. **Export results to JSON** (new step)
-   ```bash
-   # Add this to your cron or run manually
-   python3 /home/claude/article-automation/export_to_json.py
-   ```
-
-3. **Process articles automatically**
-   ```bash
-   # Process the JSON file (finds the latest one)
-   cd /home/claude/article-automation
-   latest_json=$(ls -t output/intelligence_results_*.json | head -1)
-   python3 article_processor.py "$latest_json"
-   ```
-
-4. **Sync to Obsidian**
-   - Currently manual: Copy files from `processed/` to Obsidian vault
-   - Future: Use `sync_to_obsidian.py` in Claude Desktop
-
-5. **Review in Obsidian**
-   - Open `Future Trends/Clippings/Unreviewed/`
-   - Read AI summaries
-   - Adjust tags
-   - Move to main Clippings folder when reviewed
-
-### Testing Workflow
-
-For testing with a small batch:
-
-```bash
-# Export recent results
-python3 export_to_json.py
-
-# Process just 10-20 articles
-python3 article_processor.py output/intelligence_results_*.json --limit 20
-
-# Check what was created
-cat processed/[first_article_name].md
-```
-
-## 📁 File Structure
-
-```
-article-automation/
-├── .env.example              # Environment template
-├── .env                      # Your config (git-ignored)
-├── requirements.txt          # Python dependencies
-├── feedforward.py       # Your RSS processor (copy from Ubuntu)
-├── article_processor.py     # Main processor (NEW)
-├── export_to_json.py        # Helper: pickle → JSON (NEW)
-├── sync_to_obsidian.py      # Helper: sync to vault (NEW)
-├── output/                  # feedforward.py outputs
-│   ├── intelligence_results_*.json
-│   └── processed_intelligence.pkl
-└── processed/               # Processed articles ready for Obsidian
-    ├── Article_One.md
-    ├── Article_Two.md
-    └── ...
-```
-
-## 🔧 Configuration Options
-
-### Environment Variables (.env)
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ANTHROPIC_API_KEY` | *required* | Your Claude API key |
-| `OBSIDIAN_VAULT_PATH` | `Future Trends/Clippings/Unreviewed` | Target folder in vault |
-| `MAX_CONCURRENT_REQUESTS` | `5` | Parallel article processing |
-| `REQUEST_TIMEOUT` | `30` | Timeout per request (seconds) |
-| `USE_JINA_READER` | `true` | Use Jina Reader for content fetching |
-| `USE_PLAYWRIGHT_FALLBACK` | `true` | Fall back to browser automation |
 
 ### Command Line Options
 
-**article_processor.py:**
-```bash
-python3 article_processor.py <input_json> [options]
-
+```
 Options:
-  -l, --limit N       Process only first N articles
-  -t, --test          Test mode (process only 10 articles)
+  -k, --keywords FILE       Keywords file (default: from .env)
+  -f, --feeds FILE          OPML feed file (default: from .env)
+  -o, --output-dir DIR      Output directory (default: output)
+  -d, --days-back N         Days to look back (default: 5)
+  -p, --process-articles    Process with Claude and create notes
+  -l, --article-limit N     Limit articles to process
+  --reset                   Reset processing history
 ```
 
-**export_to_json.py:**
-```bash
-python3 export_to_json.py [options]
+## 🔧 Configuration
 
-Options:
-  -p, --pickle PATH   Path to pickle file
-  -o, --output DIR    Output directory
+All settings in `.env`:
+
+```env
+# Required
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+
+# File paths
+KEYWORDS_FILE=keywords.txt
+FEEDS_FILE=feeds.opml
+OUTPUT_DIR=output
+DAYS_BACK=5
+
+# Obsidian integration
+OBSIDIAN_VAULT_PATH=/path/to/vault/Unreviewed
+
+# Optional: Email HTML reports
+EMAIL_ADDRESS=your@email.com
+
+# Article processing
+MAX_CONCURRENT_REQUESTS=3    # Lower = slower but avoids rate limits
+REQUEST_TIMEOUT=30
+USE_JINA_READER=true
 ```
 
-## 🎨 Note Format
+## 📁 Project Structure
 
-Generated notes look like this:
+```
+feedforward/
+├── feedforward.py           # Main RSS processor
+├── article_processor.py     # Claude integration & note creation
+├── .env                     # Your configuration (gitignored)
+├── keywords.txt             # Your keywords (gitignored)
+├── feeds.opml               # Your feeds (gitignored)
+├── *.example                # Templates for configuration
+├── output/                  # HTML reports & processing history
+│   ├── intelligence_*.html
+│   └── processed_intelligence.pkl
+└── processed/               # Or your Obsidian vault path
+    └── *.md                 # Generated notes
+```
+
+## 🎨 Output Format
+
+Generated Obsidian notes include:
 
 ```markdown
 ---
 title: "Article Title"
 source: "https://example.com/article"
 feed_source: "MIT Technology Review"
-published: "2025-01-15"
-created: "2025-01-16"
-tags: [artificial-intelligence, surveillance, facial-recognition]
+published: "2025-01-02"
+created: "2025-01-02"
+tags: [artificial-intelligence, neuraltech, brain-computer-interface]
 status: unreviewed
 ---
 
 # Article Title
 
 ## AI-Generated Summary
-- Key point 1
-- Key point 2
+- Key theme 1
+- Key theme 2
 - Interesting observation
 
-Suggested tags: #AI, #surveillance, #privacy
+#AI #neuraltech #brain-computer-interface
 
 ## Original Article
 [Full article content in markdown]
@@ -200,140 +159,108 @@ Suggested tags: #AI, #surveillance, #privacy
 ---
 **Source:** MIT Technology Review
 **URL:** https://example.com/article
-**Date:** 2025-01-15
-**Keywords Matched:** artificial intelligence, facial recognition
-
-*Review notes:*
-- [ ] Read and verify summary
-- [ ] Adjust tags as needed
-- [ ] Add supplementary observations
+**Keywords Matched:** artificial intelligence, brain-computer interface
 ```
 
-## 🔍 How Content Fetching Works
+## 🔍 How It Works
 
-The system uses a three-tier fallback chain:
+### Pipeline
 
-1. **trafilatura** (fast, simple)
-   - Direct HTML parsing
-   - Works for ~60% of sites
-   - Fastest method
+1. **Load Configuration** - Read `.env`, keywords, feeds
+2. **Fetch RSS Feeds** - Parse your configured OPML file
+3. **Filter by Keywords** - Match against your structured keyword list
+4. **Generate HTML Report** - Categorized intelligence report
+5. **Process Articles** (if `-p` flag):
+   - Fetch full article content (trafilatura → Jina Reader)
+   - Summarize with Claude API (with retry logic)
+   - Extract and suggest tags
+   - Create formatted Obsidian notes
+   - Save directly to vault
 
-2. **Jina Reader** (smart, free API)
-   - Handles JavaScript-heavy sites
-   - Bypasses many paywalls
-   - Works for ~85% of sites
-   - URL: `https://r.jina.ai/[article-url]`
+### Content Fetching Strategy
 
-3. **Playwright** (nuclear option)
-   - Full browser automation
-   - Works for difficult sites
-   - Slower but most reliable
-   - Currently disabled (add if needed)
+```python
+# Two-tier fallback:
+1. trafilatura (fast, works for ~70% of sites)
+   ↓ (if fails)
+2. Jina Reader (handles JS-heavy sites, ~95% success)
+   ↓ (if fails)
+3. Skip gracefully
+```
 
-## 🤖 Claude API Usage
+### Deduplication
 
-Each article costs approximately:
-- **Input tokens**: ~500-1000 (depends on article length)
-- **Output tokens**: ~200-500 (summary + tags)
-- **Cost**: ~$0.01-0.03 per article
+Uses pickle file to track processed URLs:
+```python
+# Prevents reprocessing same articles
+processed_items = {
+  'https://article-url': '2025-01-02T08:30:00',
+  # ... tracks all processed URLs
+}
+```
 
-For 20 articles/day: **~$0.20-0.60/day** or **~$6-18/month**
+## 💰 Costs
 
-Model used: `claude-sonnet-4-20250514`
+Claude API usage (Sonnet 4):
+- **Per article**: ~$0.01-0.03
+- **20 articles/day**: ~$0.20-0.60/day
+- **Monthly** (20/day): ~$6-18/month
 
 ## 🚨 Troubleshooting
 
-### "API key not found"
+### Rate Limit Errors
+
 ```bash
-# Make sure .env exists and has your key
-cat .env | grep ANTHROPIC_API_KEY
-# Should show: ANTHROPIC_API_KEY=sk-ant-...
-```
-
-### "No items found in input file"
-```bash
-# Check if JSON export worked
-cat output/intelligence_results_*.json | head -20
-
-# If empty, re-export from pickle
-python3 export_to_json.py --pickle output/processed_intelligence.pkl
-```
-
-### "Failed to fetch content" for many articles
-```bash
-# Enable Jina Reader in .env
-USE_JINA_READER=true
-
-# Or reduce concurrent requests (less aggressive)
-MAX_CONCURRENT_REQUESTS=2
-```
-
-### Claude API rate limits
-```bash
-# Reduce concurrent requests
+# Reduce concurrent requests in .env
 MAX_CONCURRENT_REQUESTS=2
 
 # Or process in smaller batches
-python3 article_processor.py input.json --limit 10
+python3 feedforward.py -p -l 10
 ```
 
-## 📊 Sample Output
+The system has built-in exponential backoff, so it will automatically retry with increasing delays (2s → 4s → 8s → 16s → 32s).
 
-```
-🤖 Article Processor initialized
-📝 Using Claude API
-🗂️  Obsidian path: Future Trends/Clippings/Unreviewed
+### No Articles Found
 
-🚀 Starting processing of 20 articles
-⚙️  Max concurrent requests: 5
+```bash
+# Check if feeds are loading
+python3 feedforward.py  # Should generate HTML report
 
-📰 Processing: AI Startup Says It Will End Crime by Blanketing...
-  🌐 Fetching from https://futurism.com/ai-startup-crime...
-  ✅ Fetched 8432 characters
-  🤖 Summarizing with Claude...
-  ✅ Generated summary (4 tags)
-  📝 Creating Obsidian note...
-  ✅ Created note: AI_Startup_Says_It_Will_End_Crime.md
+# Increase days back
+python3 feedforward.py -d 10
 
-[... 19 more articles ...]
-
-============================================================
-📊 PROCESSING SUMMARY
-============================================================
-Total articles:     20
-✅ Fetched:          18
-✅ Summarized:       18
-✅ Created:          18
-❌ Failed:           2
-============================================================
+# Check keywords.txt has valid entries
+cat keywords.txt
 ```
 
-## 🔮 Future Enhancements
+### Failed Content Fetching
 
-- [ ] Automatic Obsidian sync via MCP (no manual copy)
-- [ ] Duplicate detection (check if article already in vault)
-- [ ] Quality scoring (skip low-quality content)
-- [ ] Multi-language support
-- [ ] Custom summarization prompts per topic
-- [ ] Integration with Mind Meld plugin (auto-run after processing)
-- [ ] Web interface for review
+Most sites work with trafilatura + Jina Reader. If many fail:
+```bash
+# Ensure Jina Reader is enabled
+USE_JINA_READER=true  # in .env
+```
 
-## 📝 Notes
+## 🔮 Planned Improvements
 
-- **Privacy**: All processing happens locally except Claude API calls
-- **Costs**: ~$6-18/month for 20 articles/day
-- **Speed**: ~10-30 seconds per article (parallel processing)
-- **Quality**: Claude Sonnet 4 provides excellent summaries
-- **Reliability**: Fallback chain handles 95%+ of sites
-
-## 🆘 Support
-
-If you run into issues:
-1. Check the troubleshooting section
-2. Run with `--test` flag to isolate problems
-3. Check Claude API dashboard for quota/errors
-4. Verify `.env` configuration
+- **Source credibility scoring**: Weight articles by feed reliability (Ground News/Wikipedia-style)
+- **Better categorization**: Use Claude to suggest keyword additions based on missed articles
+- **Foreign language support**: Identify and process non-English sources
+- **Mindmap integration**: Connect with existing mindmap tools
+- **Web interface**: GUI for easier configuration and review
 
 ## 📄 License
 
-Personal use - part of your intelligence gathering system.
+MIT License - See LICENSE file
+
+## 🙏 Acknowledgments
+
+Built with:
+- [Claude API](https://www.anthropic.com/) for summarization
+- [trafilatura](https://github.com/adbar/trafilatura) for content extraction
+- [Jina Reader](https://jina.ai/) for fallback fetching
+- [feedparser](https://github.com/kurtmckee/feedparser) for RSS parsing
+
+---
+
+**Made with ☕ for futures forecasting and weak signal detection**
